@@ -14,35 +14,37 @@ export default function DataTable<T extends { id: number }>({
   data,
 }: Props<T>) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border border-gray-200 bg-white">
-        <thead className="bg-gray-100">
-          <tr>
-            {columns.map((col) => (
-              <th
-                key={String(col.key)}
-                className="border px-3 py-2 text-left text-sm font-semibold"
-              >
-                {col.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
+    <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+  <table className="w-full text-sm text-gray-700">
+    <thead className="bg-gray-50">
+      <tr>
+        {columns.map((col) => (
+          <th
+            key={String(col.key)}
+            className="border-b border-gray-200 px-4 py-3 text-left font-semibold text-gray-600"
+          >
+            {col.label}
+          </th>
+        ))}
+      </tr>
+    </thead>
 
-        <tbody>
-          {data.map((row) => (
-            <tr key={row.id} className="hover:bg-gray-50">
-              {columns.map((col) => (
-                <td key={String(col.key)} className="border px-3 py-2 text-sm">
-                  {col.render
-                    ? col.render(row)
-                    : (row as any)[col.key]}
-                </td>
-              ))}
-            </tr>
+    <tbody>
+      {data.map((row) => (
+        <tr
+          key={row.id}
+          className="border-b border-gray-100 hover:bg-gray-50 transition"
+        >
+          {columns.map((col) => (
+            <td key={String(col.key)} className="px-4 py-3">
+              {col.render ? col.render(row) : (row as any)[col.key]}
+            </td>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+
   )
 }

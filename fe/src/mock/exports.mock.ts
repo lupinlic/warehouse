@@ -1,19 +1,13 @@
-export const exportReceipts = [
+export const exports = [
   {
     id: 1,
     code: 'PX-001',
     warehouseId: 1,
-    date: '2025-03-05',
-    reason: 'Lắp đặt mạng',
-    createdBy: 2,
-  },
-]
-
-export const exportItems = [
-  {
-    id: 1,
-    receiptId: 1,
-    materialId: 2,
-    quantity: 10,
-  },
+    receiver: 'Phòng kỹ thuật',
+    date: '2025-01-12',
+    createdBy: 'staff',
+    items: [
+      { materialId: 1, quantity: 2 }
+    ]
+  }
 ]

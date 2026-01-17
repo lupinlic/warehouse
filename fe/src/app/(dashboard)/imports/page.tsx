@@ -1,13 +1,13 @@
+
 import type { Metadata } from 'next'
+import ImportsView from '@/components/feature/import'
 
 export const metadata: Metadata = {
-  title: 'Nhâp kho | Kế toán vật tư VNPT Yên Bái',
+  title: 'Nhập kho | Kế toán vật tư VNPT Yên Bái',
 }
-export default function ImportPage() {
+
+export default function ImportsPage() {
   return (
-    <div>
-      <h1>Quản lý vật tư</h1>
-      <p>Danh sách vật tư</p>
-    </div>
+    <ImportsView />
   )
 }
