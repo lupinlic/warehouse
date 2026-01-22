@@ -123,6 +123,97 @@ h3 {
 .btn-outline:hover {
   background: #f8fafc;
 }
+/* Button secondary (phụ) */
+.btn-secondary {
+  @apply inline-flex items-center justify-center
+    px-4 py-2
+    rounded
+    border border-gray-300
+    bg-white
+    text-gray-700
+     font-medium
+    transition;
+}
+
+.btn-secondary:hover {
+  @apply bg-gray-50 border-gray-400;
+}
+
+.btn-secondary:active {
+  @apply bg-gray-100;
+}
+
+.btn-secondary:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+/* Button success (xanh lá – hoàn tất / xác nhận) */
+.btn-success {
+  @apply inline-flex items-center justify-center
+    px-4 py-2
+    rounded
+    bg-green-600
+    text-white
+     font-medium
+    transition;
+}
+
+.btn-success:hover {
+  @apply bg-green-700;
+}
+
+.btn-success:active {
+  @apply bg-green-800;
+}
+
+.btn-success:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+/* Button danger (đỏ – xóa / hủy) */
+.btn-danger {
+  @apply inline-flex items-center justify-center
+    px-4 py-2
+    rounded
+    bg-red-600
+    text-white
+     font-medium
+    transition;
+}
+
+.btn-danger:hover {
+  @apply bg-red-700;
+}
+
+.btn-danger:active {
+  @apply bg-red-800;
+}
+
+.btn-danger:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+/* Button warning (vàng – cảnh báo / kiểm tra) */
+.btn-warning {
+  @apply inline-flex items-center justify-center
+    px-4 py-2
+    rounded
+    bg-yellow-500
+    text-white
+     font-medium
+    transition;
+}
+
+.btn-warning:hover {
+  @apply bg-yellow-600;
+}
+
+.btn-warning:active {
+  @apply bg-yellow-700;
+}
+
+.btn-warning:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+
 
 /* =========================
    FORM

@@ -1,20 +1,41 @@
-export const stocktakes = [
-  {
-    id: 1,
-    code: 'KK-001',
-    warehouseId: 1,
-    date: '2025-03-10',
-    createdBy: 3,
-    note: 'Kiểm kê định kỳ',
-  },
-]
+export type StocktakeItem = {
+  materialId: number
+  materialName: string
+  systemQty: number
+  actualQty: number
+}
 
-export const stocktakeItems = [
+export type StocktakeRecord = {
+  id: number
+  code: string
+  date: string
+  warehouse: string
+  createdBy: string
+  note?: string
+  items: StocktakeItem[]
+}
+
+export const stocktakesMock: StocktakeRecord[] = [
   {
     id: 1,
-    stocktakeId: 1,
-    materialId: 1,
-    systemQty: 120,
-    actualQty: 118,
+    code: 'KK001',
+    date: '2024-10-15',
+    warehouse: 'Kho trung tâm',
+    createdBy: 'Thủ kho',
+    note: 'Kiểm kê định kỳ tháng 10',
+    items: [
+      {
+        materialId: 1,
+        materialName: 'Cáp quang',
+        systemQty: 500,
+        actualQty: 480,
+      },
+      {
+        materialId: 2,
+        materialName: 'Modem GPON',
+        systemQty: 20,
+        actualQty: 20,
+      },
+    ],
   },
 ]

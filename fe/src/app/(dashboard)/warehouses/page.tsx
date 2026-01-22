@@ -1,6 +1,4 @@
-import PageTitle from '@/components/shared/common/PageTitle'
-import DataTable from '@/components/shared/table/DataTable'
-import { warehouses } from '@/mock/warehouses.mock'
+import WarehousesView from '@/components/feature/warehouses'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -9,16 +7,7 @@ export const metadata: Metadata = {
 export default function WarePage() {
   return (
     <div>
-      <PageTitle title="Danh sách kho" />
-
-      <DataTable
-        columns={[
-          { key: 'code', label: 'Mã kho' },
-          { key: 'name', label: 'Tên kho' },
-          { key: 'address', label: 'Địa chỉ' },
-        ]}
-        data={warehouses}
-      />
+      <WarehousesView />
     </div>
   )
 }
