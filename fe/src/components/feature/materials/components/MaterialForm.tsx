@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import type { Material } from '@/mock/materials.mock'
+import type { Material, MaterialFormData } from '@/types/material'
 
 type Props = {
   data?: Material | null
-  onSubmit: (data: Material) => void
+  onSubmit: (data: MaterialFormData) => void
   onClose: () => void
 }
 
@@ -14,14 +14,16 @@ export default function MaterialForm({
   onSubmit,
   onClose,
 }: Props) {
-  const [form, setForm] = useState<Material>(
-    data || {
-      id: Date.now(),
+  const [form, setForm] = useState<MaterialFormData>(
+    data ? {
+      code: data.code,
+      name: data.name,
+      unit: data.unit,
+      description: data.description,
+    } : {
       code: '',
       name: '',
       unit: '',
-      quantity: 0,
-      price: 0,
     }
   )
 
@@ -53,7 +55,7 @@ export default function MaterialForm({
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div>
         {/* Đơn vị */}
         <div>
           <label className="form-label">Đơn vị</label>
@@ -66,41 +68,23 @@ export default function MaterialForm({
             required
           />
         </div>
+      </div>
 
-        {/* Số lượng tồn */}
-        <div>
-          <label className="form-label">Số lượng tồn</label>
-          <input
-            type="number"
-            min={0}
-            className="input"
-            value={form.quantity}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                quantity: Number(e.target.value),
-              })
-            }
-          />
-        </div>
-
-        {/* Đơn giá */}
-        <div>
-          <label className="form-label">Đơn giá (VNĐ)</label>
-          <input
-            type="number"
-            min={0}
-            className="input"
-            value={form.price}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                price: Number(e.target.value),
-              })
-            }
-            required
-          />
-        </div>
+      {/* Mô tả */}
+      <div>
+        <label className="form-label">Mô tả</label>
+        <textarea
+          className="input"
+          rows={3}
+          value={form.description || ''}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              description: e.target.value,
+            })
+          }
+          placeholder="Nhập mô tả vật tư..."
+        />
       </div>
 
       {/* Actions */}

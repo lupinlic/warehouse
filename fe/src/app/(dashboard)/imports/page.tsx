@@ -1,6 +1,5 @@
-
 import type { Metadata } from 'next'
-import ImportsView from '@/components/feature/import'
+import ImportView from '@/components/feature/import'
 
 export const metadata: Metadata = {
   title: 'Nhập kho | Kế toán vật tư VNPT Yên Bái',
@@ -8,6 +7,6 @@ export const metadata: Metadata = {
 
 export default function ImportsPage() {
   return (
-    <ImportsView />
+    <ImportView />
   )
 }

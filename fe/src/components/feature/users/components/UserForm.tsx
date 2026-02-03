@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import type { MockUser } from '@/mock/users.mock'
+import type { User, UserFormData } from '@/types/user'
 import type { Role } from '@/types/role'
 
 type Props = {
-  data?: MockUser | null
-  onSubmit: (data: MockUser) => void
+  data?: User | null
+  onSubmit: (data: UserFormData) => void | Promise<void>
   onClose: () => void
 }
 
@@ -15,15 +15,23 @@ export default function UserForm({
   onSubmit,
   onClose,
 }: Props) {
-  const [form, setForm] = useState<MockUser>(
-    data || {
-      id: Date.now(),
+  const [form, setForm] = useState<UserFormData>(
+    data ? {
+      username: data.username,
+      name: data.name,
+      email: data.email,
+      role: data.role,
+      status: data.status || 'ACTIVE',
+    } : {
       username: '',
-      password: '',
       name: '',
+      email: '',
       role: 'accountant',
+      status: 'ACTIVE',
+      password: '',
     }
   )
+  const [loading, setLoading] = useState(false)
 
   return (
     <div className="space-y-4">
@@ -46,7 +54,7 @@ export default function UserForm({
         <input
           type="password"
           className="input"
-          value={form.password}
+          value={form.password || ''}
           onChange={(e) =>
             setForm({ ...form, password: e.target.value })
           }
@@ -63,6 +71,20 @@ export default function UserForm({
           }
         />
       </div>
+
+      <div>
+        <label className="form-label">Email</label>
+        <input
+          type="email"
+          className="input"
+          value={form.email || ''}
+          onChange={(e) =>
+            setForm({ ...form, email: e.target.value })
+          }
+        />
+      </div>
+
+      {/* phone removed: API payload does not require phone */}
 
       <div>
         <label className="form-label">Quyền</label>
@@ -82,15 +104,40 @@ export default function UserForm({
         </select>
       </div>
 
+      <div>
+        <label className="form-label">Trạng thái</label>
+        <select
+          className="input"
+          value={form.status || 'ACTIVE'}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              status: e.target.value,
+            })
+          }
+        >
+          <option value="ACTIVE">Hoạt động</option>
+          <option value="INACTIVE">Vô hiệu hóa</option>
+        </select>
+      </div>
+
       <div className="flex justify-end gap-2 pt-4">
-        <button className="btn-secondary" onClick={onClose}>
+        <button className="btn-secondary" onClick={onClose} disabled={loading}>
           Hủy
         </button>
         <button
           className="btn-success"
-          onClick={() => onSubmit(form)}
+          onClick={async () => {
+            setLoading(true)
+            try {
+              await onSubmit(form)
+            } finally {
+              setLoading(false)
+            }
+          }}
+          disabled={loading}
         >
-          Lưu
+          {loading ? 'Đang lưu...' : 'Lưu'}
         </button>
       </div>
     </div>

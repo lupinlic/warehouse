@@ -1,54 +1,91 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import DataTable from '@/components/shared/table/DataTable'
 import Modal from '@/components/shared/form/Modal'
 import SearchInput from '@/components/shared/form/SearchInput'
-import { filterByKeyword } from '@/utils/filter'
 import WarehouseForm from './components/WarehouseForm'
+import ConfirmDeleteModal from './components/ConfirmDeleteModal'
 import { warehouseColumns } from './components/columns'
-import {
-  warehousesMock,
-  type Warehouse,
-} from '@/mock/warehouses.mock'
+import { getWarehouses, createWarehouseRaw, updateWarehouseRaw, deleteWarehouse, mapFormDataToApiPayload } from '@/services/warehouses'
+import type { Warehouse, WarehouseFormData } from '@/types/warehouse'
 
 export default function WarehousesView() {
-  const [data, setData] = useState(warehousesMock)
+  const [data, setData] = useState<Warehouse[]>([])
+  const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<Warehouse | null>(null)
-  const [keyword, setKeyword] = useState('')
+  const [openDeleteModal, setOpenDeleteModal] = useState(false)
+  const [deletingWarehouse, setDeletingWarehouse] = useState<Warehouse | null>(null)
 
-  const filteredData = useMemo(
-    () =>
-      filterByKeyword(data, keyword, [
-        'code',
-        'name',
-        'address',
-      ]),
-    [data, keyword]
-  )
+  // Fetch warehouses on mount
+  useEffect(() => {
+    fetchWarehouses()
+  }, [])
 
-  const handleSave = (item: Warehouse) => {
-    setData((prev) => {
-      const exists = prev.find((w) => w.id === item.id)
-      return exists
-        ? prev.map((w) => (w.id === item.id ? item : w))
-        : [...prev, item]
-    })
-
-    toast.success(
-      editing ? 'Cập nhật kho thành công' : 'Thêm kho thành công'
-    )
-
-    setOpen(false)
-    setEditing(null)
+  const fetchWarehouses = async () => {
+    try {
+      setLoading(true)
+      const res = await getWarehouses()
+      setData(res.data || [])
+      console.log('Fetched warehouses:', res)
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi tải danh sách kho')
+      console.error('Fetch warehouses error:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleDelete = (item: Warehouse) => {
-    if (!confirm('Xóa kho này?')) return
-    setData((prev) => prev.filter((w) => w.id !== item.id))
-    toast.success('Đã xóa kho')
+  const handleSave = async (item: WarehouseFormData) => {
+    try {
+      if (editing) {
+        // Update
+        const payload = mapFormDataToApiPayload(item)
+        const res = await updateWarehouseRaw(editing.id, payload)
+        toast.success('Cập nhật kho thành công')
+        setData((prev) =>
+          prev.map((w) =>
+            w.id === editing.id
+              ? res.data
+              : w
+          )
+        )
+      } else {
+        // Create
+        const payload = mapFormDataToApiPayload(item)
+        const res = await createWarehouseRaw(payload)
+        toast.success('Thêm kho thành công')
+        setData((prev) => [...prev, res.data])
+      }
+
+      setOpen(false)
+      setEditing(null)
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi lưu kho')
+      console.error('Save warehouse error:', err)
+    }
+  }
+
+  const handleDelete = async (item: Warehouse) => {
+    setDeletingWarehouse(item)
+    setOpenDeleteModal(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!deletingWarehouse) return
+
+    try {
+      await deleteWarehouse(deletingWarehouse.id)
+      setData((prev) => prev.filter((w) => w.id !== deletingWarehouse.id))
+      toast.success('Đã xóa kho')
+      setOpenDeleteModal(false)
+      setDeletingWarehouse(null)
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi xóa kho')
+      console.error('Delete warehouse error:', err)
+    }
   }
 
   return (
@@ -56,33 +93,31 @@ export default function WarehousesView() {
       <div className="flex justify-between items-center">
         <h1 className="page-title">Quản lý kho</h1>
 
-        <div className="flex items-center gap-2">
-          <SearchInput
-            value={keyword}
-            onChange={setKeyword}
-            placeholder="Tìm theo mã, tên kho, địa chỉ..."
-          />
-
-          <button
-            className="btn-primary w-40"
-            onClick={() => setOpen(true)}
-          >
-            + Thêm kho
-          </button>
-        </div>
+        <button
+          className="btn-primary"
+          onClick={() => {
+            setEditing(null)
+            setOpen(true)
+          }}
+        >
+          + Thêm kho
+        </button>
       </div>
 
-      <DataTable
-        columns={warehouseColumns(
-          (row) => {
-            setEditing(row)
-            setOpen(true)
-            toast.info('Đang chỉnh sửa kho')
-          },
-          handleDelete
-        )}
-        data={filteredData}
-      />
+      {loading ? (
+        <div className="text-center py-8 text-slate-500">Đang tải...</div>
+      ) : (
+        <DataTable
+          columns={warehouseColumns(
+            (row) => {
+              setEditing(row)
+              setOpen(true)
+            },
+            handleDelete
+          )}
+          data={data}
+        />
+      )}
 
       <Modal
         open={open}
@@ -101,6 +136,16 @@ export default function WarehousesView() {
           }}
         />
       </Modal>
+
+      <ConfirmDeleteModal
+        open={openDeleteModal}
+        itemName={deletingWarehouse?.name || ''}
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setOpenDeleteModal(false)
+          setDeletingWarehouse(null)
+        }}
+      />
     </div>
   )
 }

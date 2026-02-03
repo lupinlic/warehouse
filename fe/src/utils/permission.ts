@@ -9,11 +9,13 @@ export const PERMISSIONS: Record<Role, string[]> = {
     'exports',
     'stocktakes',
     'reports',
+    'stocks',
   ],
   storekeeper: [
     'imports',
     'exports',
     'stocktakes',
+    'stocks',
   ],
   manager: [
     'materials',
@@ -24,5 +26,6 @@ export const PERMISSIONS: Record<Role, string[]> = {
     'stocktakes',
     'reports',
     'users',
+    'stocks'
   ],
 }

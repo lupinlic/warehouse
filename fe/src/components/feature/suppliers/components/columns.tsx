@@ -1,4 +1,4 @@
-import type { Supplier } from '@/mock/suppliers.mock'
+import type { Supplier } from '@/types/supplier'
 
 export const supplierColumns = (
   onEdit: (row: Supplier) => void,

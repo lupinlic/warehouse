@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import type { Supplier } from '@/mock/suppliers.mock'
+import type { Supplier, SupplierFormData } from '@/types/supplier'
 
 type Props = {
   data?: Supplier | null
-  onSubmit: (data: Supplier) => void
+  onSubmit: (data: SupplierFormData) => void
   onClose: () => void
 }
 
@@ -14,9 +14,14 @@ export default function SupplierForm({
   onSubmit,
   onClose,
 }: Props) {
-  const [form, setForm] = useState<Supplier>(
-    data || {
-      id: Date.now(),
+  const [form, setForm] = useState<SupplierFormData>(
+    data ? {
+      code: data.code,
+      name: data.name,
+      phone: data.phone,
+      email: data.email,
+      address: data.address,
+    } : {
       code: '',
       name: '',
       phone: '',

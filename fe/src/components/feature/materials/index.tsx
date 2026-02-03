@@ -1,56 +1,90 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import DataTable from '@/components/shared/table/DataTable'
 import Modal from '@/components/shared/form/Modal'
-import SearchInput from '@/components/shared/form/SearchInput'
-import { filterByKeyword } from '@/utils/filter'
 import MaterialForm from './components/MaterialForm'
+import ConfirmDeleteModal from './components/ConfirmDeleteModal'
 import { materialColumns } from './components/columns'
-import {
-  materialsMock,
-  type Material,
-} from '@/mock/materials.mock'
+import { getMaterials, createMaterialRaw, updateMaterialRaw, deleteMaterial, mapFormDataToApiPayload } from '@/services/materials'
+import type { Material, MaterialFormData } from '@/types/material'
 
 export default function MaterialsView() {
-  const [data, setData] = useState(materialsMock)
+  const [data, setData] = useState<Material[]>([])
+  const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<Material | null>(null)
-  const [keyword, setKeyword] = useState('')
+  const [openDeleteModal, setOpenDeleteModal] = useState(false)
+  const [deletingMaterial, setDeletingMaterial] = useState<Material | null>(null)
 
-  const filteredData = useMemo(
-    () =>
-      filterByKeyword(data, keyword, [
-        'code',
-        'name',
-        'unit',
-      ]),
-    [data, keyword]
-  )
+  // Fetch materials on mount
+  useEffect(() => {
+    fetchMaterials()
+  }, [])
 
-  const handleSave = (item: Material) => {
-    setData((prev) => {
-      const exists = prev.find((m) => m.id === item.id)
-      return exists
-        ? prev.map((m) => (m.id === item.id ? item : m))
-        : [...prev, item]
-    })
-
-    toast.success(
-      editing
-        ? 'Cập nhật vật tư thành công'
-        : 'Thêm vật tư thành công'
-    )
-
-    setOpen(false)
-    setEditing(null)
+  const fetchMaterials = async () => {
+    try {
+      setLoading(true)
+      const res = await getMaterials()
+      setData(res.data || [])
+      console.log('Fetched materials:', res)
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi tải danh sách vật tư')
+      console.error('Fetch materials error:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleDelete = (item: Material) => {
-    if (!confirm('Xóa vật tư này?')) return
-    setData((prev) => prev.filter((m) => m.id !== item.id))
-    toast.success('Đã xóa vật tư')
+  const handleSave = async (item: MaterialFormData) => {
+    try {
+      if (editing) {
+        // Update
+        const payload = mapFormDataToApiPayload(item)
+        const res = await updateMaterialRaw(editing.id, payload)
+        toast.success('Cập nhật vật tư thành công')
+        setData((prev) =>
+          prev.map((m) =>
+            m.id === editing.id
+              ? res.data
+              : m
+          )
+        )
+      } else {
+        // Create
+        const payload = mapFormDataToApiPayload(item)
+        const res = await createMaterialRaw(payload)
+        toast.success('Thêm vật tư thành công')
+        setData((prev) => [...prev, res.data])
+      }
+
+      setOpen(false)
+      setEditing(null)
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi lưu vật tư')
+      console.error('Save material error:', err)
+    }
+  }
+
+  const handleDelete = async (item: Material) => {
+    setDeletingMaterial(item)
+    setOpenDeleteModal(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!deletingMaterial) return
+
+    try {
+      await deleteMaterial(deletingMaterial.id)
+      setData((prev) => prev.filter((m) => m.id !== deletingMaterial.id))
+      toast.success('Đã xóa vật tư')
+      setOpenDeleteModal(false)
+      setDeletingMaterial(null)
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi xóa vật tư')
+      console.error('Delete material error:', err)
+    }
   }
 
   return (
@@ -58,33 +92,31 @@ export default function MaterialsView() {
       <div className="flex justify-between items-center">
         <h1 className="page-title">Quản lý vật tư</h1>
 
-        <div className="flex items-center gap-2">
-          <SearchInput
-            value={keyword}
-            onChange={setKeyword}
-            placeholder="Tìm theo mã, tên, đơn vị..."
-          />
-
-          <button
-            className="btn-primary w-40"
-            onClick={() => setOpen(true)}
-          >
-            + Thêm vật tư
-          </button>
-        </div>
+        <button
+          className="btn-primary"
+          onClick={() => {
+            setEditing(null)
+            setOpen(true)
+          }}
+        >
+          + Thêm vật tư
+        </button>
       </div>
 
-      <DataTable
-        columns={materialColumns(
-          (row) => {
-            setEditing(row)
-            setOpen(true)
-            toast.info('Đang chỉnh sửa vật tư')
-          },
-          handleDelete
-        )}
-        data={filteredData}
-      />
+      {loading ? (
+        <div className="text-center py-8 text-slate-500">Đang tải...</div>
+      ) : (
+        <DataTable
+          columns={materialColumns(
+            (row) => {
+              setEditing(row)
+              setOpen(true)
+            },
+            handleDelete
+          )}
+          data={data}
+        />
+      )}
 
       <Modal
         open={open}
@@ -103,6 +135,16 @@ export default function MaterialsView() {
           }}
         />
       </Modal>
+
+      <ConfirmDeleteModal
+        open={openDeleteModal}
+        itemName={deletingMaterial?.name || ''}
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setOpenDeleteModal(false)
+          setDeletingMaterial(null)
+        }}
+      />
     </div>
   )
 }

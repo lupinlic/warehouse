@@ -1,57 +1,90 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import DataTable from '@/components/shared/table/DataTable'
 import Modal from '@/components/shared/form/Modal'
-import SearchInput from '@/components/shared/form/SearchInput'
-import { filterByKeyword } from '@/utils/filter'
 import SupplierForm from './components/SupplierForm'
+import ConfirmDeleteModal from './components/ConfirmDeleteModal'
 import { supplierColumns } from './components/columns'
-import {
-  suppliersMock,
-  type Supplier,
-} from '@/mock/suppliers.mock'
+import { getSuppliers, createSupplierRaw, updateSupplierRaw, deleteSupplier, mapFormDataToApiPayload } from '@/services/suppliers'
+import type { Supplier, SupplierFormData } from '@/types/supplier'
 
 export default function SuppliersView() {
-  const [data, setData] = useState(suppliersMock)
+  const [data, setData] = useState<Supplier[]>([])
+  const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<Supplier | null>(null)
-  const [keyword, setKeyword] = useState('')
+  const [openDeleteModal, setOpenDeleteModal] = useState(false)
+  const [deletingSupplier, setDeletingSupplier] = useState<Supplier | null>(null)
 
-  const filteredData = useMemo(
-    () =>
-      filterByKeyword(data, keyword, [
-        'code',
-        'name',
-        'phone',
-        'email',
-      ]),
-    [data, keyword]
-  )
+  // Fetch suppliers on mount
+  useEffect(() => {
+    fetchSuppliers()
+  }, [])
 
-  const handleSave = (item: Supplier) => {
-    setData((prev) => {
-      const exists = prev.find((s) => s.id === item.id)
-      return exists
-        ? prev.map((s) => (s.id === item.id ? item : s))
-        : [...prev, item]
-    })
-
-    toast.success(
-      editing
-        ? 'Cập nhật nhà cung cấp thành công'
-        : 'Thêm nhà cung cấp thành công'
-    )
-
-    setOpen(false)
-    setEditing(null)
+  const fetchSuppliers = async () => {
+    try {
+      setLoading(true)
+      const res = await getSuppliers()
+      setData(res.data || [])
+      console.log('Fetched suppliers:', res)
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi tải danh sách nhà cung cấp')
+      console.error('Fetch suppliers error:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleDelete = (item: Supplier) => {
-    if (!confirm('Xóa nhà cung cấp này?')) return
-    setData((prev) => prev.filter((s) => s.id !== item.id))
-    toast.success('Đã xóa nhà cung cấp')
+  const handleSave = async (item: SupplierFormData) => {
+    try {
+      if (editing) {
+        // Update
+        const payload = mapFormDataToApiPayload(item)
+        const res = await updateSupplierRaw(editing.id, payload)
+        toast.success('Cập nhật nhà cung cấp thành công')
+        setData((prev) =>
+          prev.map((s) =>
+            s.id === editing.id
+              ? res.data
+              : s
+          )
+        )
+      } else {
+        // Create
+        const payload = mapFormDataToApiPayload(item)
+        const res = await createSupplierRaw(payload)
+        toast.success('Thêm nhà cung cấp thành công')
+        setData((prev) => [...prev, res.data])
+      }
+
+      setOpen(false)
+      setEditing(null)
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi lưu nhà cung cấp')
+      console.error('Save supplier error:', err)
+    }
+  }
+
+  const handleDelete = async (item: Supplier) => {
+    setDeletingSupplier(item)
+    setOpenDeleteModal(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!deletingSupplier) return
+
+    try {
+      await deleteSupplier(deletingSupplier.id)
+      setData((prev) => prev.filter((s) => s.id !== deletingSupplier.id))
+      toast.success('Đã xóa nhà cung cấp')
+      setOpenDeleteModal(false)
+      setDeletingSupplier(null)
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi xóa nhà cung cấp')
+      console.error('Delete supplier error:', err)
+    }
   }
 
   return (
@@ -59,33 +92,31 @@ export default function SuppliersView() {
       <div className="flex justify-between items-center">
         <h1 className="page-title">Quản lý nhà cung cấp</h1>
 
-        <div className="flex items-center gap-2">
-          <SearchInput
-            value={keyword}
-            onChange={setKeyword}
-            placeholder="Tìm theo mã, tên, SĐT, email..."
-          />
-
-          <button
-            className="btn-primary w-60"
-            onClick={() => setOpen(true)}
-          >
-            + Thêm nhà cung cấp
-          </button>
-        </div>
+        <button
+          className="btn-primary"
+          onClick={() => {
+            setEditing(null)
+            setOpen(true)
+          }}
+        >
+          + Thêm nhà cung cấp
+        </button>
       </div>
 
-      <DataTable
-        columns={supplierColumns(
-          (row) => {
-            setEditing(row)
-            setOpen(true)
-            toast.info('Đang chỉnh sửa nhà cung cấp')
-          },
-          handleDelete
-        )}
-        data={filteredData}
-      />
+      {loading ? (
+        <div className="text-center py-8 text-slate-500">Đang tải...</div>
+      ) : (
+        <DataTable
+          columns={supplierColumns(
+            (row) => {
+              setEditing(row)
+              setOpen(true)
+            },
+            handleDelete
+          )}
+          data={data}
+        />
+      )}
 
       <Modal
         open={open}
@@ -106,6 +137,16 @@ export default function SuppliersView() {
           }}
         />
       </Modal>
+
+      <ConfirmDeleteModal
+        open={openDeleteModal}
+        itemName={deletingSupplier?.name || ''}
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setOpenDeleteModal(false)
+          setDeletingSupplier(null)
+        }}
+      />
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import type { MockUser } from '@/mock/users.mock'
+import type { User } from '@/types/user'
 
 const roleLabel: Record<string, string> = {
   accountant: 'Kế toán',
@@ -7,20 +7,25 @@ const roleLabel: Record<string, string> = {
 }
 
 export const userColumns = (
-  onEdit: (row: MockUser) => void,
-  onDelete: (row: MockUser) => void
+  onEdit: (row: User) => void,
+  onDelete: (row: User) => void
 ) => [
   { key: 'username', label: 'Tài khoản' },
   { key: 'name', label: 'Họ tên' },
+  { key: 'email', label: 'Email' },
   {
     key: 'role',
     label: 'Quyền',
-    render: (row: MockUser) => roleLabel[row.role],
+    render: (row: User) => {
+      const roleText = roleLabel[row.role] || row.role || '-'
+      console.debug('Role render:', { role: row.role, roleText })
+      return roleText
+    },
   },
   {
     key: 'actions',
     label: 'Thao tác',
-    render: (row: MockUser) => (
+    render: (row: User) => (
       <div className="flex gap-2">
         <button
           className="btn-warning btn"

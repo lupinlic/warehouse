@@ -1,4 +1,4 @@
-import type { Warehouse } from '@/mock/warehouses.mock'
+import type { Warehouse } from '@/types/warehouse'
 
 export const warehouseColumns = (
   onEdit: (row: Warehouse) => void,

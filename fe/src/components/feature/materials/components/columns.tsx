@@ -1,4 +1,4 @@
-import type { Material } from '@/mock/materials.mock'
+import type { Material } from '@/types/material'
 
 export const materialColumns = (
   onEdit: (row: Material) => void,
@@ -7,8 +7,7 @@ export const materialColumns = (
   { key: 'code', label: 'Mã vật tư' },
   { key: 'name', label: 'Tên vật tư' },
   { key: 'unit', label: 'Đơn vị' },
-  { key: 'quantity', label: 'Tồn kho' },
-  { key: 'price', label: 'Giá(vnđ)' },
+  { key: 'description', label: 'Mô tả' },
   {
     key: 'actions',
     label: 'Thao tác',

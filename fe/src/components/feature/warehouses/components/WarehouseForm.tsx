@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import type { Warehouse } from '@/mock/warehouses.mock'
+import type { Warehouse, WarehouseFormData } from '@/types/warehouse'
 
 type Props = {
   data?: Warehouse | null
-  onSubmit: (data: Warehouse) => void
+  onSubmit: (data: WarehouseFormData) => void
   onClose: () => void
 }
 
@@ -14,13 +14,15 @@ export default function WarehouseForm({
   onSubmit,
   onClose,
 }: Props) {
-  const [form, setForm] = useState<Warehouse>(
-    data || {
-      id: Date.now(),
+  const [form, setForm] = useState<WarehouseFormData>(
+    data ? {
+      code: data.code,
+      name: data.name,
+      address: data.address,
+    } : {
       code: '',
       name: '',
       address: '',
-      manager: '',
     }
   )
 
@@ -55,17 +57,6 @@ export default function WarehouseForm({
           value={form.address}
           onChange={(e) =>
             setForm({ ...form, address: e.target.value })
-          }
-        />
-      </div>
-
-      <div>
-        <label className="form-label">Thủ kho</label>
-        <input
-          className="input"
-          value={form.manager}
-          onChange={(e) =>
-            setForm({ ...form, manager: e.target.value })
           }
         />
       </div>

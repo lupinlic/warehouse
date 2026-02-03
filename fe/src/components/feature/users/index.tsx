@@ -1,56 +1,91 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import DataTable from '@/components/shared/table/DataTable'
 import Modal from '@/components/shared/form/Modal'
 import UserForm from './components/UserForm'
+import ConfirmDeleteModal from './components/ConfirmDeleteModal'
 import { userColumns } from './components/columns'
-import {
-  users as usersMock,
-  type MockUser,
-} from '@/mock/users.mock'
+import { getUsers, createUser, updateUser, deleteUser, mapFormDataToApiPayload, createUserRaw, updateUserRaw } from '@/services/users'
+import type { User, UserFormData } from '@/types/user'
 
 export default function UsersView() {
-  const [data, setData] = useState(usersMock)
+  const [data, setData] = useState<User[]>([])
+  const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
-  const [editing, setEditing] = useState<MockUser | null>(
-    null
-  )
+  const [editing, setEditing] = useState<User | null>(null)
+  const [openDeleteModal, setOpenDeleteModal] = useState(false)
+  const [deletingUser, setDeletingUser] = useState<User | null>(null)
 
-  const handleSave = (item: MockUser) => {
-    setData((prev) => {
-      const exists = prev.find((u) => u.id === item.id)
+  // Fetch users on mount
+  useEffect(() => {
+    fetchUsers()
+  }, [])
 
-      if (exists) {
-        return prev.map((u) =>
-          u.id === item.id
-            ? {
-                ...item,
-                password:
-                  item.password || u.password,
-              }
-            : u
-        )
-      }
-
-      return [...prev, item]
-    })
-
-    toast.success(
-      editing
-        ? 'Cập nhật người dùng thành công'
-        : 'Thêm người dùng thành công'
-    )
-
-    setOpen(false)
-    setEditing(null)
+  const fetchUsers = async () => {
+    try {
+      setLoading(true)
+      const res = await getUsers()
+      setData(res.data || [])
+      console.log('Fetched users:', res)
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi tải danh sách người dùng')
+      console.error('Fetch users error:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleDelete = (item: MockUser) => {
-    if (!confirm('Xóa người dùng này?')) return
-    setData((prev) => prev.filter((u) => u.id !== item.id))
-    toast.success('Đã xóa người dùng')
+  const handleSave = async (item: UserFormData) => {
+    try {
+      if (editing) {
+        // Update: send exact API payload
+        const payload = mapFormDataToApiPayload(item)
+        const res = await updateUserRaw(editing.id, payload)
+        toast.success('Cập nhật người dùng thành công')
+        setData((prev) =>
+          prev.map((u) =>
+            u.id === editing.id
+              ? res.data
+              : u
+          )
+        )
+      } else {
+        // Create
+        const payload = mapFormDataToApiPayload(item)
+        const res = await createUserRaw(payload)
+        toast.success('Thêm người dùng thành công')
+        setData((prev) => [...prev, res.data])
+        
+      }
+
+      setOpen(false)
+      setEditing(null)
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi lưu người dùng')
+      console.error('Save user error:', err)
+    }
+  }
+
+  const handleDelete = async (item: User) => {
+    setDeletingUser(item)
+    setOpenDeleteModal(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!deletingUser) return
+
+    try {
+      await deleteUser(deletingUser.id)
+      setData((prev) => prev.filter((u) => u.id !== deletingUser.id))
+      toast.success('Đã xóa người dùng')
+      setOpenDeleteModal(false)
+      setDeletingUser(null)
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi xóa người dùng')
+      console.error('Delete user error:', err)
+    }
   }
 
   return (
@@ -60,22 +95,29 @@ export default function UsersView() {
 
         <button
           className="btn-primary"
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            setEditing(null)
+            setOpen(true)
+          }}
         >
           + Thêm người dùng
         </button>
       </div>
 
-      <DataTable
-        columns={userColumns(
-          (row) => {
-            setEditing(row)
-            setOpen(true)
-          },
-          handleDelete
-        )}
-        data={data}
-      />
+      {loading ? (
+        <div className="text-center py-8 text-slate-500">Đang tải...</div>
+      ) : (
+        <DataTable
+          columns={userColumns(
+            (row) => {
+              setEditing(row)
+              setOpen(true)
+            },
+            handleDelete
+          )}
+          data={data}
+        />
+      )}
 
       <Modal
         open={open}
@@ -94,6 +136,16 @@ export default function UsersView() {
           }}
         />
       </Modal>
+
+      <ConfirmDeleteModal
+        open={openDeleteModal}
+        itemName={deletingUser?.name || ''}
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setOpenDeleteModal(false)
+          setDeletingUser(null)
+        }}
+      />
     </div>
   )
 }

@@ -10,6 +10,7 @@ const menus = [
   { key: 'materials', label: 'Vật tư', path: '/materials' },
   { key: 'warehouses', label: 'Kho', path: '/warehouses' },
   { key: 'suppliers', label: 'Nhà cung cấp', path: '/suppliers' },
+  { key: 'stocks', label: 'Tồn kho', path: '/stocks' },
   { key: 'imports', label: 'Nhập kho', path: '/imports' },
   { key: 'exports', label: 'Xuất kho', path: '/exports' },
   { key: 'stocktakes', label: 'Kiểm kê', path: '/stocktakes' },
@@ -21,9 +22,9 @@ export default function Sidebar() {
   const user = useAuthStore((s) => s.user)
   const pathname = usePathname()
 
-  if (!user) return null
+  if (!user || !user.role) return null
 
-  const allowed = PERMISSIONS[user.role]
+  const allowed = PERMISSIONS[user.role] || []
 
   return (
     <aside className="sidebar w-64 flex flex-col">

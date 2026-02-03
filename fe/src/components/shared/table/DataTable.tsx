@@ -4,12 +4,12 @@ type Column<T> = {
   render?: (row: T) => React.ReactNode
 }
 
-type Props<T> = {
+type Props<T extends { id: string | number }> = {
   columns: Column<T>[]
   data: T[]
 }
 
-export default function DataTable<T extends { id: number }>({
+export default function DataTable<T extends { id: string | number }>({
   columns,
   data,
 }: Props<T>) {

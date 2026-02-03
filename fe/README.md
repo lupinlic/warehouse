@@ -80,22 +80,141 @@ Mỗi vai trò có quyền truy cập các chức năng khác nhau.
 
 ## 5. Phân quyền (RBAC)
 
-Định nghĩa tại:
+Hệ thống hỗ trợ 3 vai trò chính với quyền hạn khác nhau:
 
+### Bảng Phân quyền Chi tiết
+
+| Chức năng | Kế toán | Thủ kho | Quản lý |
+|-----------|---------|---------|---------|
+| **Danh mục** | | | |
+| Quản lý vật tư | ✅ View, Add, Edit | ✅ View Only | ✅ Full |
+| Quản lý kho | ✅ View | ✅ View, Edit | ✅ Full |
+| Quản lý nhà cung cấp | ✅ View, Add, Edit | ❌ | ✅ Full |
+| Quản lý người dùng | ❌ | ❌ | ✅ Full |
+| **Nghiệp vụ** | | | |
+| Phiếu nhập | ✅ View, Add, Confirm | ✅ View | ✅ Full |
+| Phiếu xuất | ✅ View | ✅ Add, Confirm | ✅ Full |
+| Kiểm kê | ✅ View | ✅ Add, Submit | ✅ Full |
+| **Báo cáo** | | | |
+| Báo cáo nhập-xuất | ✅ View, Export | ❌ | ✅ Full |
+| Báo cáo tồn kho | ✅ View, Export | ✅ View, Export | ✅ Full |
+| **Hệ thống** | | | |
+| Xem nhật ký | ❌ | ❌ | ✅ Full |
+
+### Định nghĩa Permissions
+
+Định nghĩa tại: `src/utils/permission.ts`
+
+```typescript
+export const ROLE_PERMISSIONS = {
+  accountant: {
+    materials: ['view', 'create', 'edit'],
+    warehouses: ['view'],
+    suppliers: ['view', 'create', 'edit'],
+    imports: ['view', 'create', 'confirm'],
+    reports: ['view', 'export'],
+  },
+  storekeeper: {
+    materials: ['view'],
+    warehouses: ['view', 'edit'],
+    exports: ['view', 'create', 'confirm'],
+    stocktakes: ['view', 'create'],
+  },
+  manager: {
+    all: true, // Toàn bộ quyền
+  },
+}
 ```
-src/utils/permission.ts
-```
 
-Ví dụ:
+### Hiển thị trên UI
 
-* Kế toán: materials, suppliers, imports, exports, reports
-* Thủ kho: materials, warehouses, stocktakes
-* Quản lý: toàn bộ
-
-Sidebar sẽ:
+Sidebar và các component sẽ:
 
 * Mục **được phép** → hiển thị bình thường
-* Mục **không được phép** → màu xám, icon 🔒, không click
+* Mục **không được phép** → ẩn hoặc hiển thị với icon 🔒, vô hiệu hóa
+
+---
+
+## 6. Cấu trúc Cơ sở dữ liệu
+
+### Các bảng chính (Tables)
+
+#### Quản lý Người Dùng & Vai Trò
+
+**users**
+```
+- id, username, password, name, email, phone
+- role_id, warehouse_id
+- is_active, created_at, updated_at
+```
+
+**roles**
+```
+- id, code, name, description
+```
+
+#### Quản lý Danh Mục
+
+**materials**
+```
+- id, code, name, unit, price
+- category, description, is_active
+- created_at, updated_at
+```
+
+**warehouses**
+```
+- id, code, name, address, phone
+- manager_id (FK users)
+- is_active, created_at, updated_at
+```
+
+**suppliers**
+```
+- id, code, name, phone, email, address
+- tax_id, bank_account
+- is_active, created_at, updated_at
+```
+
+**warehouse_inventory**
+```
+- id, warehouse_id, material_id
+- quantity, last_updated
+```
+
+#### Phiếu Nhập Xuất
+
+**import_receipts & import_items**
+```
+- receipt: id, code, date, supplier_id, warehouse_id
+  created_by, total, status, note, created_at, updated_at
+- items: id, receipt_id, material_id, quantity, price
+```
+
+**export_receipts & export_items**
+```
+- receipt: id, code, date, warehouse_id, reason
+  created_by, total, status, note, created_at, updated_at
+- items: id, receipt_id, material_id, quantity, price
+```
+
+#### Kiểm Kê
+
+**stocktake_records & stocktake_items**
+```
+- record: id, code, date, warehouse_id, created_by
+  note, status, approved_by, approved_at, created_at, updated_at
+- items: id, record_id, material_id, system_qty, actual_qty
+  difference (generated), status (match/mismatch)
+```
+
+#### Nhật Ký Thao Tác (Optional)
+
+**audit_logs**
+```
+- id, user_id, action, entity_type, entity_id
+- old_value, new_value, ip_address, created_at
+```
 
 ---
 
@@ -214,7 +333,6 @@ Bao gồm:
 
 ❌ Chưa làm:
 
-* Modal thêm/sửa/xóa
 * Backend NestJS
 * API thật
 * Báo cáo nâng cao
