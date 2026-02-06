@@ -7,6 +7,7 @@ export interface ExportReceiptItem {
   materialCode?: string
   materialName?: string
   quantity: number
+  price?: number
 }
 
 export interface ExportReceipt {
@@ -17,6 +18,8 @@ export interface ExportReceipt {
   reason?: string
   items: ExportReceiptItem[]
   status: 'DRAFT' | 'COMPLETED' | 'CANCELLED'
+  createdBy?: string
+  createdById?: string
   createdAt?: string
   updatedAt?: string
 }

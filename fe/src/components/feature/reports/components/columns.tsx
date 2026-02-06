@@ -1,4 +1,4 @@
-import type { ReportInOutStock } from '@/mock/report-inout-stock.mock'
+import type { ReportInOutStock } from '@/types/report'
 
 export const reportColumns = [
   { key: 'materialCode', label: 'Mã VT' },

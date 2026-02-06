@@ -1,4 +1,4 @@
-import type { StocktakeRecord } from '@/mock/stocktakes.mock'
+import type { StocktakeRecord } from '@/types/stocktake'
 
 export const stocktakeColumns = (
   onView: (row: StocktakeRecord) => void
@@ -18,6 +18,18 @@ export const stocktakeColumns = (
   {
     key: 'createdBy',
     label: 'Người lập',
+  },
+  {
+    key: 'status',
+    label: 'Trạng thái',
+    render: (row: StocktakeRecord) => {
+      const statusMap: Record<string, string> = {
+        draft: 'Nháp',
+        completed: 'Hoàn thành',
+        approved: 'Đã duyệt',
+      }
+      return statusMap[row.status || 'draft'] || 'Nháp'
+    },
   },
   {
     key: 'action',

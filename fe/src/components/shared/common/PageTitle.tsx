@@ -1,5 +1,8 @@
-export default function PageTitle({ title }: { title: string }) {
+export default function PageTitle({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <h1 className="text-xl font-bold mb-4">{title}</h1>
+    <div className="mb-4">
+      <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+      {subtitle && <p className="text-sm text-gray-600 mt-1">{subtitle}</p>}
+    </div>
   )
 }

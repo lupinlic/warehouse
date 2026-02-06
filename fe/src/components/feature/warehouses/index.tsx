@@ -48,7 +48,7 @@ export default function WarehousesView() {
         setData((prev) =>
           prev.map((w) =>
             w.id === editing.id
-              ? res.data
+              ? { ...res.data, manager: item.manager || '' }
               : w
           )
         )
@@ -57,7 +57,7 @@ export default function WarehousesView() {
         const payload = mapFormDataToApiPayload(item)
         const res = await createWarehouseRaw(payload)
         toast.success('Thêm kho thành công')
-        setData((prev) => [...prev, res.data])
+        setData((prev) => [...prev, { ...res.data, manager: item.manager || '' }])
       }
 
       setOpen(false)

@@ -9,6 +9,7 @@ export interface Warehouse {
   phone?: string
   manager: string
   managerId?: number
+  userId?: number
   isActive: boolean
   createdAt?: string
   updatedAt?: string
@@ -20,7 +21,7 @@ export interface WarehouseFormData {
   address: string
   phone?: string
   manager?: string
-  managerId?: number
+  managerId?: string
 }
 
 export interface WarehouseResponse {

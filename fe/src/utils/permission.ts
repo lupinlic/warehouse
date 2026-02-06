@@ -10,6 +10,7 @@ export const PERMISSIONS: Record<Role, string[]> = {
     'stocktakes',
     'reports',
     'stocks',
+    'journalEntries',
   ],
   storekeeper: [
     'imports',
@@ -26,6 +27,7 @@ export const PERMISSIONS: Record<Role, string[]> = {
     'stocktakes',
     'reports',
     'users',
-    'stocks'
+    'stocks',
+    'journalEntries',
   ],
 }

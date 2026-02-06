@@ -1,5 +1,6 @@
 import { http } from '@/lib/http'
 import type { Warehouse, WarehouseFormData } from '@/types/warehouse'
+import { getUsers } from './users'
 
 // API response type từ backend
 interface WarehouseApiResponse {
@@ -8,6 +9,7 @@ interface WarehouseApiResponse {
   name: string
   location: string
   status: string
+  user_id?: number
   created_at?: string
   updated_at?: string
 }
@@ -22,6 +24,7 @@ function mapApiWarehouseToWarehouse(apiWarehouse: WarehouseApiResponse): Warehou
     phone: undefined,
     manager: '',
     managerId: undefined,
+    userId: apiWarehouse.user_id,
     isActive: apiWarehouse.status === 'ACTIVE',
     createdAt: apiWarehouse.created_at,
     updatedAt: apiWarehouse.updated_at,
@@ -34,11 +37,14 @@ function mapApiResponseList(apiData: WarehouseApiResponse[]): Warehouse[] {
 
 // Transform UI form data to API format
 export function mapFormDataToApiPayload(data: WarehouseFormData): Record<string, any> {
+  console.log('mapFormDataToApiPayload managerId:', data.managerId)
+  
   return {
     code: data.code,
     name: data.name,
     location: data.address,
     status: 'ACTIVE',
+    user_id: data.managerId,
   }
 }
 
@@ -71,9 +77,35 @@ export async function getWarehouses(params?: { page?: number; limit?: number; se
   const path = query.toString() ? `/warehouses?${query.toString()}` : '/warehouses'
   const res = await http<WarehouseApiResponse[]>(path)
 
-  return {
-    data: Array.isArray(res) ? mapApiResponseList(res) : [],
-    total: Array.isArray(res) ? res.length : 0,
+  // Fetch users to get manager names
+  try {
+    const usersRes = await getUsers()
+    const usersMap = new Map(usersRes.data.map(user => [user.id, user.name]))
+    
+    const warehouses = Array.isArray(res) 
+      ? res.map(warehouse => {
+          const mapped = mapApiWarehouseToWarehouse(warehouse)
+          if (warehouse.user_id) {
+            // Match user_id (number) with user.id (string) - need to convert
+            const managerName = usersMap.get(String(warehouse.user_id)) || usersMap.get(warehouse.user_id as any)
+            if (managerName) {
+              mapped.manager = managerName
+            }
+          }
+          return mapped
+        })
+      : []
+
+    return {
+      data: warehouses,
+      total: warehouses.length,
+    }
+  } catch (error) {
+    console.error('Error fetching warehouses with managers:', error)
+    return {
+      data: Array.isArray(res) ? mapApiResponseList(res) : [],
+      total: Array.isArray(res) ? res.length : 0,
+    }
   }
 }
 

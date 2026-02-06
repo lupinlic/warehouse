@@ -1,5 +1,6 @@
 import { http } from '@/lib/http'
 import type { ImportReceipt, ImportReceiptFormData, ImportReceiptItem } from '@/types/importReceipt'
+import { getUsers } from './users'
 
 // API response type từ backend
 interface ImportReceiptItemApiResponse {
@@ -37,6 +38,7 @@ interface ImportReceiptApiResponse {
   supplier?: SupplierInfo
   items: ImportReceiptItemApiResponse[]
   status: string
+  created_by?: string
   created_at?: string
   updated_at?: string
 }
@@ -69,6 +71,8 @@ function mapApiReceiptToReceipt(apiReceipt: ImportReceiptApiResponse): ImportRec
     items: items.map(mapApiItemToItem),
     status: apiReceipt.status as 'DRAFT' | 'COMPLETED' | 'CANCELLED',
     totalAmount: totalAmount,
+    createdById: apiReceipt.created_by,
+    createdBy: undefined,
     createdAt: apiReceipt.created_at,
     updatedAt: apiReceipt.updated_at,
   }
@@ -99,10 +103,13 @@ async function ensureMaterialCache() {
 // Enrich items with material names from cache or API
 async function enrichItemsWithMaterialNames(items: ImportReceiptItem[]): Promise<ImportReceiptItem[]> {
   await ensureMaterialCache()
+  console.log('Material cache size:', materialCache.size)
+  console.log('Items before enrichment:', items)
   
   return items.map((item) => {
     if (!item.materialName && item.materialId) {
       const material = materialCache.get(item.materialId)
+      console.log(`Looking up material ${item.materialId}:`, material)
       if (material) {
         return {
           ...item,
@@ -118,6 +125,7 @@ async function enrichItemsWithMaterialNames(items: ImportReceiptItem[]): Promise
 // Enrich import receipt with material names
 async function enrichImportReceipt(receipt: ImportReceipt): Promise<ImportReceipt> {
   const enrichedItems = await enrichItemsWithMaterialNames(receipt.items)
+  console.log(`Receipt ${receipt.id} enriched items:`, enrichedItems)
   return {
     ...receipt,
     items: enrichedItems,
@@ -126,7 +134,9 @@ async function enrichImportReceipt(receipt: ImportReceipt): Promise<ImportReceip
 
 // Enrich multiple import receipts with material names
 async function enrichImportReceipts(receipts: ImportReceipt[]): Promise<ImportReceipt[]> {
-  return Promise.all(receipts.map(enrichImportReceipt))
+  const enriched = await Promise.all(receipts.map(enrichImportReceipt))
+  console.log('All receipts enriched:', enriched)
+  return enriched
 }
 
 // Transform UI form data to API format
@@ -172,11 +182,38 @@ export async function getImportReceipts(params?: { page?: number; limit?: number
   const res = await http<ImportReceiptApiResponse[]>(path)
 
   const receipts = Array.isArray(res) ? mapApiResponseList(res) : []
-  const enrichedReceipts = await enrichImportReceipts(receipts)
-
-  return {
-    data: enrichedReceipts,
-    total: Array.isArray(res) ? res.length : 0,
+  console.log('Receipts before enrichment:', receipts)
+  console.log('Receipt createdBy values:', receipts.map(r => ({ id: r.id, createdById: r.createdById })))
+  
+  // Fetch users to get creator names
+  try {
+    const usersRes = await getUsers()
+    console.log('All users:', usersRes.data)
+    const usersMap = new Map(usersRes.data.map(user => [user.id, user.name]))
+    console.log('Users map entries:', Array.from(usersMap.entries()))
+    
+    const receiptsWithCreators = receipts.map(receipt => {
+      const userName = receipt.createdById 
+        ? (usersMap.get(receipt.createdById) || `NOT_FOUND: ${receipt.createdById}`)
+        : 'NO_ID'
+      console.log(`Receipt ${receipt.id}: createdById=${receipt.createdById} -> userName=${userName}`)
+      return {
+        ...receipt,
+        createdBy: userName
+      }
+    })
+    console.log('Receipts with creators:', receiptsWithCreators)
+    
+    return {
+      data: await enrichImportReceipts(receiptsWithCreators),
+      total: Array.isArray(res) ? res.length : 0,
+    }
+  } catch (error) {
+    console.error('Error enriching receipts with creator names:', error)
+    return {
+      data: await enrichImportReceipts(receipts),
+      total: Array.isArray(res) ? res.length : 0,
+    }
   }
 }
 

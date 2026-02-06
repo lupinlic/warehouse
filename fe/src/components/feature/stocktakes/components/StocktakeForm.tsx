@@ -1,27 +1,66 @@
 'use client'
 
-import { useState } from 'react'
-import { materialsMock } from '@/mock/materials.mock'
-import type { StocktakeItem, StocktakeRecord } from '@/mock/stocktakes.mock'
+import { useState, useEffect } from 'react'
+import { getMaterials } from '@/services/materials'
+import { getWarehouses } from '@/services/warehouses'
+import { createStockAdjustment, mapStocktakeToApiPayload } from '@/services/stocktakes'
+import type { Material } from '@/types/material'
+import type { Warehouse } from '@/types/warehouse'
 import { toast } from 'sonner'
+import { Loader2 } from 'lucide-react'
+
+type StocktakeItem = {
+  materialId: number | string
+  materialName: string
+  systemQty: number
+  actualQty: number
+}
 
 type Props = {
-  onSubmit: (data: StocktakeRecord) => void
+  onSubmit: () => void
   onCancel: () => void
 }
 
 export default function StocktakeForm({ onSubmit, onCancel }: Props) {
   const [warehouse, setWarehouse] = useState('')
   const [note, setNote] = useState('')
+  const [items, setItems] = useState<StocktakeItem[]>([])
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([])
+  const [materials, setMaterials] = useState<Material[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const [items, setItems] = useState<StocktakeItem[]>(
-    materialsMock.map((m) => ({
-      materialId: m.id,
-      materialName: m.name,
-      systemQty: m.quantity,
-      actualQty: m.quantity,
-    }))
-  )
+  // Load warehouses và materials on mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true)
+        const [warehousesRes, materialsRes] = await Promise.all([
+          getWarehouses(),
+          getMaterials(),
+        ])
+
+        setWarehouses(warehousesRes.data)
+        setMaterials(materialsRes.data)
+
+        // Initialize items với tất cả materials
+        const initialItems = materialsRes.data.map((m: any) => ({
+          materialId: m.id,
+          materialName: m.name,
+          systemQty: m.quantity || 0,
+          actualQty: m.quantity || 0,
+        }))
+        setItems(initialItems)
+      } catch (error) {
+        console.error('Failed to load data:', error)
+        toast.error('Lỗi khi tải dữ liệu')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadData()
+  }, [])
 
   /* ======================
    * UPDATE ACTUAL QTY
@@ -56,29 +95,60 @@ export default function StocktakeForm({ onSubmit, onCancel }: Props) {
    * SUBMIT
    * ====================== */
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!warehouse) {
       toast.error('Vui lòng chọn kho kiểm kê')
       return
     }
 
-    const record: StocktakeRecord = {
-      id: Date.now(),
-      code: `KK${Date.now()}`,
-      date: new Date().toISOString().slice(0, 10),
-      warehouse,
-      createdBy: 'Thủ kho',
-      note,
-      items,
-    }
+    try {
+      setIsSubmitting(true)
 
-    toast.success('Lập biên bản kiểm kê thành công')
-    onSubmit(record)
+      // Tạo stock adjustments cho các items có chênh lệch
+      const adjustments = items.filter((item) => item.actualQty !== item.systemQty)
+
+      if (adjustments.length === 0) {
+        toast.info('Không có chênh lệch, không cần tạo kiểm kê')
+        onSubmit()
+        return
+      }
+
+      // Create adjustments
+      for (const item of adjustments) {
+        const diff = item.actualQty - item.systemQty
+        const payload = mapStocktakeToApiPayload({
+          warehouseId: warehouse,
+          materialId: item.materialId.toString(),
+          type: diff > 0 ? 'INCREASE' : 'DECREASE',
+          quantity: Math.abs(diff),
+          reason: note || 'Kiểm kê tồn kho',
+        })
+
+        await createStockAdjustment(payload)
+      }
+
+      toast.success('Lập biên bản kiểm kê thành công')
+      onSubmit()
+    } catch (error) {
+      console.error('Failed to create stocktake:', error)
+      toast.error('Lỗi khi lập biên bản kiểm kê')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   /* ======================
    * UI
    * ====================== */
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center gap-3 py-8">
+        <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+        <span>Đang tải dữ liệu...</span>
+      </div>
+    )
+  }
 
   return (
     <form
@@ -99,8 +169,11 @@ export default function StocktakeForm({ onSubmit, onCancel }: Props) {
             required
           >
             <option value="">-- Chọn kho --</option>
-            <option>Kho trung tâm</option>
-            <option>Kho chi nhánh</option>
+            {warehouses.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.name}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -181,11 +254,17 @@ export default function StocktakeForm({ onSubmit, onCancel }: Props) {
           type="button"
           onClick={onCancel}
           className="btn-secondary"
+          disabled={isSubmitting}
         >
           Hủy
         </button>
 
-        <button type="submit" className="btn-primary">
+        <button
+          type="submit"
+          className="btn-primary disabled:opacity-50"
+          disabled={isSubmitting}
+        >
+          {isSubmitting && <Loader2 className="inline mr-2 h-4 w-4 animate-spin" />}
           Lập biên bản
         </button>
       </div>

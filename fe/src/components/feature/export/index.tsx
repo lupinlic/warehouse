@@ -80,10 +80,13 @@ export default function ExportView() {
       setLoading(true)
       const payload = mapFormDataToApiPayload(formData)
       const result = await createExportReceiptRaw(payload)
-      setExports((prev) => [result.data, ...prev])
+      console.log('Created export receipt:', result.data)
       toast.success('Tạo phiếu xuất thành công')
       setFormOpen(false)
+      // Reload the export list to ensure all data is properly enriched
+      await fetchExports()
     } catch (error) {
+      console.error('Error creating export:', error)
       toast.error('Lỗi khi tạo phiếu xuất')
     } finally {
       setLoading(false)
@@ -103,12 +106,14 @@ export default function ExportView() {
     try {
       setLoading(true)
       const payload = mapFormDataToApiPayload(formData)
-      const result = await updateExportReceiptRaw(selectedExport.id, payload)
-      setExports((prev) => prev.map((e) => (e.id === selectedExport.id ? result.data : e)))
+      await updateExportReceiptRaw(selectedExport.id, payload)
       toast.success('Cập nhật phiếu xuất thành công')
       setFormOpen(false)
       setSelectedExport(null)
+      // Reload the export list to ensure all data is properly enriched
+      await fetchExports()
     } catch (error) {
+      console.error('Error updating export:', error)
       toast.error('Lỗi khi cập nhật phiếu xuất')
     } finally {
       setLoading(false)
@@ -124,10 +129,12 @@ export default function ExportView() {
     try {
       setLoading(true)
       await deleteExportReceipt(deleteId)
-      setExports((prev) => prev.filter((e) => e.id !== deleteId))
       toast.success('Xóa phiếu xuất thành công')
       setDeleteId(null)
+      // Reload the export list
+      await fetchExports()
     } catch (error) {
+      console.error('Error deleting export:', error)
       toast.error('Lỗi khi xóa phiếu xuất')
     } finally {
       setLoading(false)
@@ -142,10 +149,12 @@ export default function ExportView() {
   const handleComplete = async (id: string) => {
     try {
       setLoading(true)
-      const result = await completeExportReceipt(id)
-      setExports((prev) => prev.map((e) => (e.id === id ? result.data : e)))
+      await completeExportReceipt(id)
       toast.success('Đã hoàn tất phiếu xuất')
+      // Reload the export list to ensure all data is properly enriched
+      await fetchExports()
     } catch (error) {
+      console.error('Error completing export:', error)
       toast.error('Lỗi khi hoàn tất phiếu xuất')
     } finally {
       setLoading(false)
@@ -155,10 +164,12 @@ export default function ExportView() {
   const handleCancel = async (id: string) => {
     try {
       setLoading(true)
-      const result = await cancelExportReceipt(id)
-      setExports((prev) => prev.map((e) => (e.id === id ? result.data : e)))
+      await cancelExportReceipt(id)
       toast.success('Đã hủy phiếu xuất')
+      // Reload the export list to ensure all data is properly enriched
+      await fetchExports()
     } catch (error) {
+      console.error('Error canceling export:', error)
       toast.error('Lỗi khi hủy phiếu xuất')
     } finally {
       setLoading(false)

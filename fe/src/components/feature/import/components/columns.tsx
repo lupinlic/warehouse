@@ -16,31 +16,38 @@ export const columns = (callbacks: {
   },
   { key: 'warehouseName', label: 'Tên kho' },
   { key: 'supplierName', label: 'Tên nhà cung cấp' },
+  { key: 'createdBy', label: 'Người tạo' },
   {
     key: 'items',
     label: 'Vật tư nhập',
-    render: (row: ImportReceipt) => (
-      <div className="text-sm">
-        <button
-          onClick={() => callbacks.onViewDetail?.(row.id)}
-          className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
-        >
-          {row.items.length} vật tư
-        </button>
-        <div className="text-gray-600 mt-1">
-          {row.items.slice(0, 2).map((item, idx) => (
-            <div key={idx} className="text-xs">
-              • {item.materialName || item.materialCode || 'N/A'} (SL: {item.quantity})
-            </div>
-          ))}
-          {row.items.length > 2 && (
-            <div className="text-xs text-blue-600">
-              + {row.items.length - 2} vật tư khác
-            </div>
-          )}
+    render: (row: ImportReceipt) => {
+      if (!row.items || row.items.length === 0) {
+        return <span className="text-gray-500 text-xs">Không có vật tư</span>
+      }
+      return (
+        <div className="text-sm space-y-1">
+          <button
+            onClick={() => callbacks.onViewDetail?.(row.id)}
+            className="font-medium text-blue-600 hover:text-blue-800 hover:underline block"
+          >
+            {row.items.length} vật tư
+          </button>
+          <div className="text-gray-600">
+            {row.items.slice(0, 2).map((item, idx) => (
+              <div key={idx} className="text-xs py-0.5">
+                <span className="text-gray-700">• {item.materialName || item.materialCode || 'N/A'}</span>
+                <span className="text-gray-500"> (SL: {item.quantity})</span>
+              </div>
+            ))}
+            {row.items.length > 2 && (
+              <div className="text-xs text-blue-600 pt-0.5">
+                + {row.items.length - 2} vật tư khác
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    )
+      )
+    }
   },
   { 
     key: 'totalAmount', 

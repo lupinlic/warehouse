@@ -16,6 +16,7 @@ const menus = [
   { key: 'stocktakes', label: 'Kiểm kê', path: '/stocktakes' },
   { key: 'reports', label: 'Báo cáo', path: '/reports' },
   { key: 'users', label: 'Người dùng', path: '/users' },
+  { key: 'journalEntries', label: 'Sổ nhật ký', path: '/journalEntries' },
 ]
 
 export default function Sidebar() {
@@ -29,8 +30,8 @@ export default function Sidebar() {
   return (
     <aside className="sidebar w-64 flex flex-col">
       {/* Header */}
-      <div className="px-4 py-4 border-b border-[var(--color-border)]">
-        <div className="text-xs text-[var(--color-text-muted)] uppercase">
+      <div className="px-4 py-4 border-b border-border">
+        <div className="text-xs text-text-muted uppercase">
           Kế toán vật tư
         </div>
 
@@ -38,7 +39,7 @@ export default function Sidebar() {
           {user.name}
         </div>
 
-        <div className="text-xs text-[var(--color-text-muted)]">
+        <div className="text-xs text-text-muted">
           Quyền: {user.role}
         </div>
       </div>
@@ -73,7 +74,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-[var(--color-border)] text-xs text-[var(--color-text-muted)]">
+      <div className="px-4 py-3 border-t border-border text-xs text-text-muted">
         © VNPT Yên Bái
       </div>
     </aside>

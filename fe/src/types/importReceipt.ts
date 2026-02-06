@@ -21,6 +21,8 @@ export interface ImportReceipt {
   items: ImportReceiptItem[]
   status: 'DRAFT' | 'COMPLETED' | 'CANCELLED'
   totalAmount?: number
+  createdBy?: string
+  createdById?: string
   createdAt?: string
   updatedAt?: string
 }

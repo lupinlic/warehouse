@@ -1,5 +1,19 @@
 import { http } from '@/lib/http'
 import type { User, UserFormData, UserListResponse, UserApiResponse } from '@/types/user'
+import type { Role } from '@/types/role'
+
+// Map API role to UI role
+function mapApiRoleToUiRole(apiRoleName: string): Role {
+  const roleMap: Record<string, Role> = {
+    'THU_KHO': 'storekeeper',
+    'QUAN_LY': 'manager',
+    'KE_TOAN': 'accountant',
+    'thu_kho': 'storekeeper',
+    'quan_ly': 'manager',
+    'ke_toan': 'accountant',
+  }
+  return roleMap[apiRoleName] || 'accountant'
+}
 
 // Transform API response to User type
 function mapApiUserToUser(apiUser: UserApiResponse): User {
@@ -9,7 +23,7 @@ function mapApiUserToUser(apiUser: UserApiResponse): User {
     name: apiUser.full_name,
     email: apiUser.email,
     phone: apiUser.phone,
-    role: (apiUser.roles?.[0]?.name?.toLowerCase() || 'accountant') as any,
+    role: mapApiRoleToUiRole(apiUser.roles?.[0]?.name || 'accountant'),
     status: apiUser.status,
     createdAt: apiUser.created_at,
     updatedAt: apiUser.updated_at,
@@ -76,6 +90,19 @@ export async function getUsers(params?: { page?: number; limit?: number; search?
   return {
     data: Array.isArray(res) ? mapApiResponseList(res) : [],
     total: Array.isArray(res) ? res.length : 0,
+  }
+}
+
+// Get warehouse managers (THU_KHO or QUAN_LY roles)
+export async function getWarehouseManagers() {
+  const res = await getUsers()
+  console.log('getWarehouseManagers response:', res)
+  const managers = (res.data || []).filter(
+    (user) => user.role === 'storekeeper'
+  )
+  return {
+    data: managers,
+    total: managers.length,
   }
 }
 

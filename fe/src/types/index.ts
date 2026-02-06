@@ -48,3 +48,6 @@ export type {
   ReportFilterParams,
   ReportSummary,
 } from './report'
+
+// Journal Entries
+export type { Account, JournalEntryLine, JournalEntry, JournalEntryDisplay } from './journalEntry'

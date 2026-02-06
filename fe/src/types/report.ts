@@ -4,7 +4,7 @@
 
 // ============= IN/OUT STOCK REPORT =============
 export interface ReportInOutStock {
-  id: number
+  id: string | number
   materialCode: string
   materialName: string
   unit: string
@@ -17,9 +17,17 @@ export interface ReportInOutStock {
   period?: string
 }
 
+export interface InventorySummaryData {
+  materialCode: string
+  materialName: string
+  unit: string
+  quantity: number
+  value: number
+}
+
 export interface InOutStockReportResponse {
   success: boolean
-  data: ReportInOutStock[]
+  data: ReportInOutStock[] | InventorySummaryData[]
   total?: number
   totalValue?: number
   message?: string
@@ -27,7 +35,7 @@ export interface InOutStockReportResponse {
 
 // ============= STOCK STRUCTURE REPORT =============
 export interface StockStructureItem {
-  materialId: number
+  materialId: string
   materialCode: string
   materialName: string
   unit: string
@@ -38,7 +46,7 @@ export interface StockStructureItem {
 }
 
 export interface StockStructureReport {
-  warehouseId: number
+  warehouseId: string
   warehouseName: string
   totalItems: number
   totalQuantity: number
@@ -77,8 +85,8 @@ export interface ExportAnalysisReportResponse {
 
 // ============= GENERAL REPORT QUERY =============
 export interface ReportFilterParams {
-  startDate?: string
-  endDate?: string
+  fromDate?: string
+  toDate?: string
   warehouseId?: number
   supplierId?: number
   materialId?: number

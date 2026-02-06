@@ -1,4 +1,4 @@
-import type { StocktakeRecord } from '@/mock/stocktakes.mock'
+import type { StocktakeRecord } from '@/types/stocktake'
 
 export default function StocktakeDetail({
   data,
@@ -12,6 +12,16 @@ export default function StocktakeDetail({
         <Info label="Ngày kiểm kê" value={data.date} />
         <Info label="Kho" value={data.warehouse} />
         <Info label="Người lập" value={data.createdBy} />
+        {data.status && (
+          <Info
+            label="Trạng thái"
+            value={{
+              draft: 'Nháp',
+              completed: 'Hoàn thành',
+              approved: 'Đã duyệt',
+            }[data.status] || data.status}
+          />
+        )}
       </div>
 
       {data.note && (
