@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/auth.store'
 import { PERMISSIONS } from '@/utils/permission'
 
 const menus = [
+  { key: 'dashboard', label: 'Tổng quan', path: '/' },
   { key: 'materials', label: 'Vật tư', path: '/materials' },
   { key: 'warehouses', label: 'Kho', path: '/warehouses' },
   { key: 'suppliers', label: 'Nhà cung cấp', path: '/suppliers' },
@@ -17,6 +18,7 @@ const menus = [
   { key: 'reports', label: 'Báo cáo', path: '/reports' },
   { key: 'users', label: 'Người dùng', path: '/users' },
   { key: 'journalEntries', label: 'Sổ nhật ký', path: '/journalEntries' },
+  { key: 'systemLogs', label: 'Nhật ký hệ thống', path: '/notifications' },
 ]
 
 export default function Sidebar() {

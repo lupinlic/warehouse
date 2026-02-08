@@ -1,13 +1,38 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/store/auth.store'
 import { useRouter } from 'next/navigation'
 import { Bell, HelpCircle, ChevronDown, LogOut, User, Settings } from 'lucide-react'
+import { NotificationDropdown } from './NotificationDropdown'
+import { auditLogsService } from '@/services/auditLogs'
 
 export default function Header() {
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
   const router = useRouter()
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false)
+  const [notificationCount, setNotificationCount] = useState(0)
+
+  // Poll for notification count every 10 seconds
+  useEffect(() => {
+    const fetchNotificationCount = async () => {
+      try {
+        const count = await auditLogsService.getTotalAuditLogsCount()
+        setNotificationCount(count)
+      } catch (err) {
+        console.error('Error fetching notification count:', err)
+      }
+    }
+
+    // Fetch immediately
+    fetchNotificationCount()
+
+    // Set up polling interval
+    const interval = setInterval(fetchNotificationCount, 10000) // 10 seconds
+
+    return () => clearInterval(interval)
+  }, [])
 
   const handleLogout = () => {
     logout()
@@ -22,14 +47,26 @@ export default function Header() {
       {/* Right */}
       <div className="flex items-center gap-4 relative">
         {/* Help */}
-        <button className="text-gray-500 hover:text-gray-700">
-          <HelpCircle size={18} />
-        </button>
 
         {/* Notification */}
-        <button className="text-gray-500 hover:text-gray-700">
-          <Bell size={18} />
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+            className="text-gray-500 hover:text-gray-700 transition relative mt-2"
+          >
+            <Bell size={18} />
+            {notificationCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {notificationCount > 99 ? '99+' : notificationCount}
+              </span>
+            )}
+          </button>
+          <NotificationDropdown
+            isOpen={isNotificationOpen}
+            onClose={() => setIsNotificationOpen(false)}
+            onCountChange={setNotificationCount}
+          />
+        </div>
 
         {/* User Hover Area */}
         {/* User Hover Area */}

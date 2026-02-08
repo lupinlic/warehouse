@@ -2,43 +2,40 @@
  * AuditLog (Nhật ký thao tác) - Ghi lại các thao tác trong hệ thống
  */
 
-export interface AuditLog {
-  id: string
-  userId: string
-  userName: string
-  action: string
-  entityType: string
-  entityId: string
-  entityName?: string
-  oldValue?: string
-  newValue?: string
-  ipAddress?: string
-  userAgent?: string
-  status: 'success' | 'failed'
-  description?: string
-  createdAt: string
-}
-
+// API response format từ backend
 export interface AuditLogResponse {
   id: string
-  user_id: string
-  user_name: string
-  action: string
-  entity_type: string
-  entity_id: string
-  entity_name?: string
-  old_value?: string
-  new_value?: string
-  ip_address?: string
-  user_agent?: string
-  status: 'success' | 'failed'
-  description?: string
   created_at: string
+  updated_at: string
+  deleted_at: null | string
+  user_id: string
+  action: string
+  entity_name: string
+  entity_id: string
+  old_value?: Record<string, any> | null
+  new_value?: Record<string, any> | null
+  ip?: string | null
+  user_agent?: string | null
+}
+
+// Transformed internal format
+export interface AuditLog {
+  id: string
+  createdAt: string
+  updatedAt: string
+  userId: string
+  action: string
+  entityName: string
+  entityId: string
+  oldValue?: Record<string, any> | null
+  newValue?: Record<string, any> | null
+  ip?: string | null
+  userAgent?: string | null
 }
 
 export interface AuditLogListResponse {
   data: AuditLogResponse[]
-  total: number
-  page: number
-  pageSize: number
+  total?: number
+  page?: number
+  pageSize?: number
 }
