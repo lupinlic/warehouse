@@ -10,6 +10,7 @@ import { stocktakeColumns } from './components/columns'
 import type { StocktakeRecord } from '@/types/stocktake'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useAuthStore } from '@/store/auth.store'
 
 export default function StocktakesView() {
   const [warehouses, setWarehouses] = useState<any[]>([])
@@ -20,6 +21,8 @@ export default function StocktakesView() {
   const [data, setData] = useState<StocktakeRecord[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isActioning, setIsActioning] = useState(false)
+  const user = useAuthStore((s) => s.user)
+  const isAccountant = user?.role === 'accountant'
 
   // Load danh sách kiểm kê
   const loadStocktakes = async (warehouseId?: string) => {
@@ -129,9 +132,9 @@ export default function StocktakesView() {
           </select>
 
         <button
-          className="btn-primary w-65"
+          className="btn-primary w-65 disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={() => setOpenCreate(true)}
-          disabled={isActioning}
+          disabled={isActioning || isAccountant}
         >
           + Lập biên bản kiểm kê
         </button>
@@ -150,9 +153,9 @@ export default function StocktakesView() {
               setSelected(row)
               setOpenDetail(true)
             },
-            handleCancel,
-            handleApprove,
-            handleDelete
+            isAccountant ? undefined : handleCancel,
+            isAccountant ? undefined : handleApprove,
+            isAccountant ? undefined : handleDelete
           )}
           data={data}
         />

@@ -22,6 +22,7 @@ import { getWarehouses } from '@/services/warehouses'
 import { getMaterials } from '@/services/materials'
 import type { Warehouse } from '@/types/warehouse'
 import type { Material } from '@/types/material'
+import { useAuthStore } from '@/store/auth.store'
 
 export default function ExportView() {
   const [exports, setExports] = useState<ExportReceipt[]>([])
@@ -33,6 +34,8 @@ export default function ExportView() {
   const [detailOpen, setDetailOpen] = useState(false)
   const [selectedExport, setSelectedExport] = useState<ExportReceipt | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const user = useAuthStore((s) => s.user)
+  const isAccountant = user?.role === 'accountant'
 
   useEffect(() => {
     fetchExports()
@@ -183,8 +186,9 @@ export default function ExportView() {
       <h1 className="page-title">Phiếu xuất kho</h1>
 
       <button
-        className="btn-primary"
+        className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
         onClick={handleCreate}
+        disabled={isAccountant}
       >
         + Thêm phiếu xuất
       </button>
@@ -195,8 +199,8 @@ export default function ExportView() {
         <DataTable
           columns={columns({
             onViewDetail: handleViewDetail,
-            onComplete: handleComplete,
-            onCancel: handleCancel,
+            onComplete: isAccountant ? undefined : handleComplete,
+            onCancel: isAccountant ? undefined : handleCancel,
           })}
           data={exports}
         />

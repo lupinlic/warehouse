@@ -1,8 +1,8 @@
 import type { Warehouse } from '@/types/warehouse'
 
 export const warehouseColumns = (
-  onEdit: (row: Warehouse) => void,
-  onDelete: (row: Warehouse) => void
+  onEdit?: (row: Warehouse) => void,
+  onDelete?: (row: Warehouse) => void
 ) => [
   { key: 'code', label: 'Mã kho' },
   { key: 'name', label: 'Tên kho' },
@@ -13,18 +13,22 @@ export const warehouseColumns = (
     label: 'Thao tác',
     render: (row: Warehouse) => (
       <div className="flex gap-2">
-        <button
-          className="btn-warning btn"
-          onClick={() => onEdit(row)}
-        >
-          Sửa
-        </button>
-        <button
-          className="btn-danger btn"
-          onClick={() => onDelete(row)}
-        >
-          Xóa
-        </button>
+        {onEdit && (
+          <button
+            className="btn-warning btn"
+            onClick={() => onEdit(row)}
+          >
+            Sửa
+          </button>
+        )}
+        {onDelete && (
+          <button
+            className="btn-danger btn"
+            onClick={() => onDelete(row)}
+          >
+            Xóa
+          </button>
+        )}
       </div>
     ),
   },

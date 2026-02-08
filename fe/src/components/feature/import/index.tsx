@@ -19,6 +19,7 @@ import {
   mapFormDataToApiPayload,
 } from '@/services/importReceipts'
 import type { ImportReceipt, ImportReceiptFormData } from '@/types/importReceipt'
+import { useAuthStore } from '@/store/auth.store'
 
 export default function ImportView() {
   const [data, setData] = useState<ImportReceipt[]>([])
@@ -29,6 +30,8 @@ export default function ImportView() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [detailId, setDetailId] = useState<string | null>(null)
   const [openDeleteModal, setOpenDeleteModal] = useState(false)
+  const user = useAuthStore((s) => s.user)
+  const isAccountant = user?.role === 'accountant'
 
   useEffect(() => {
     fetchImports()
@@ -132,8 +135,9 @@ export default function ImportView() {
       <PageTitle title="Phiếu nhập kho" />
 
       <button
-        className="btn-primary"
+        className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
         onClick={handleCreate}
+        disabled={isAccountant}
       >
         + Thêm phiếu nhập
       </button>
@@ -143,10 +147,10 @@ export default function ImportView() {
       ) : (
         <DataTable
           columns={columns({
-            onEdit: handleEdit,
-            onDelete: handleDelete,
-            onCancel: handleCancel,
-            onComplete: handleComplete,
+            onEdit: isAccountant ? undefined : handleEdit,
+            onDelete: isAccountant ? undefined : handleDelete,
+            onCancel: isAccountant ? undefined : handleCancel,
+            onComplete: isAccountant ? undefined : handleComplete,
             onViewDetail: handleViewDetail,
           })}
           data={data}

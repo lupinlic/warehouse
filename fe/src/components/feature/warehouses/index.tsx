@@ -10,6 +10,7 @@ import ConfirmDeleteModal from './components/ConfirmDeleteModal'
 import { warehouseColumns } from './components/columns'
 import { getWarehouses, createWarehouseRaw, updateWarehouseRaw, deleteWarehouse, mapFormDataToApiPayload } from '@/services/warehouses'
 import type { Warehouse, WarehouseFormData } from '@/types/warehouse'
+import { useAuthStore } from '@/store/auth.store'
 
 export default function WarehousesView() {
   const [data, setData] = useState<Warehouse[]>([])
@@ -18,6 +19,8 @@ export default function WarehousesView() {
   const [editing, setEditing] = useState<Warehouse | null>(null)
   const [openDeleteModal, setOpenDeleteModal] = useState(false)
   const [deletingWarehouse, setDeletingWarehouse] = useState<Warehouse | null>(null)
+  const user = useAuthStore((s) => s.user)
+  const isAccountant = user?.role === 'accountant'
 
   // Fetch warehouses on mount
   useEffect(() => {
@@ -94,11 +97,12 @@ export default function WarehousesView() {
         <h1 className="page-title">Quản lý kho</h1>
 
         <button
-          className="btn-primary"
+          className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={() => {
             setEditing(null)
             setOpen(true)
           }}
+          disabled={isAccountant}
         >
           + Thêm kho
         </button>
@@ -109,11 +113,11 @@ export default function WarehousesView() {
       ) : (
         <DataTable
           columns={warehouseColumns(
-            (row) => {
+            isAccountant ? undefined : (row) => {
               setEditing(row)
               setOpen(true)
             },
-            handleDelete
+            isAccountant ? undefined : handleDelete
           )}
           data={data}
         />

@@ -1,9 +1,9 @@
 import type { ExportReceipt } from '@/types/exportReceipt'
 
 export const columns = (callbacks: {
-  onViewDetail: (data: ExportReceipt) => void
-  onComplete: (id: string) => void
-  onCancel: (id: string) => void
+  onViewDetail?: (data: ExportReceipt) => void
+  onComplete?: (id: string) => void
+  onCancel?: (id: string) => void
 }) => [
   { 
     key: 'id', 
@@ -25,7 +25,7 @@ export const columns = (callbacks: {
       return (
         <div className="text-sm space-y-1">
           <button
-            onClick={() => callbacks.onViewDetail(row)}
+            onClick={() => callbacks.onViewDetail?.(row)}
             className="font-medium text-blue-600 hover:text-blue-800 hover:underline block"
           >
             {row.items.length} vật tư
@@ -73,24 +73,24 @@ export const columns = (callbacks: {
     label: 'Thao tác',
     render: (row: ExportReceipt) => (
       <div className="flex gap-1 flex-wrap">
-        <button
-          className="px-2 py-1 text-xs bg-purple-50 text-purple-600 hover:bg-purple-100 rounded transition font-medium"
-          onClick={() => callbacks.onViewDetail(row)}
-        >
+          <button
+            className="px-2 py-1 text-xs bg-purple-50 text-purple-600 hover:bg-purple-100 rounded transition font-medium"
+            onClick={() => callbacks.onViewDetail?.(row)}
+          >
           Chi tiết
-        </button>
-        {row.status === 'DRAFT' && (
+          </button>
+        {row.status === 'DRAFT' && callbacks.onComplete && (
           <button
             className="px-2 py-1 text-xs bg-green-50 text-green-600 hover:bg-green-100 rounded transition font-medium"
-            onClick={() => callbacks.onComplete(row.id)}
+            onClick={() => callbacks.onComplete?.(row.id)}
           >
             Hoàn tất
           </button>
         )}
-        {row.status === 'DRAFT' && (
+        {row.status === 'DRAFT' && callbacks.onCancel && (
           <button
             className="px-2 py-1 text-xs bg-yellow-50 text-yellow-600 hover:bg-yellow-100 rounded transition font-medium"
-            onClick={() => callbacks.onCancel(row.id)}
+            onClick={() => callbacks.onCancel?.(row.id)}
           >
             Hủy
           </button>

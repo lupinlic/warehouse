@@ -1,10 +1,10 @@
 import type { ImportReceipt } from '@/types/importReceipt'
 
 export const columns = (callbacks: {
-  onEdit: (id: string) => void
-  onDelete: (id: string) => void
-  onCancel: (id: string) => void
-  onComplete: (id: string) => void
+  onEdit?: (id: string) => void
+  onDelete?: (id: string) => void
+  onCancel?: (id: string) => void
+  onComplete?: (id: string) => void
   onViewDetail?: (id: string) => void
 }) => [
   { 
@@ -90,18 +90,18 @@ export const columns = (callbacks: {
         >
           Chi tiết
         </button>
-        {row.status === 'DRAFT' && (
+        {row.status === 'DRAFT' && callbacks.onComplete && (
           <button
             className="px-2 py-1 text-xs bg-green-50 text-green-600 hover:bg-green-100 rounded transition font-medium"
-            onClick={() => callbacks.onComplete(row.id)}
+            onClick={() => callbacks.onComplete?.(row.id)}
           >
             Hoàn tất
           </button>
         )}
-        {row.status === 'DRAFT' && (
+        {row.status === 'DRAFT' && callbacks.onCancel && (
           <button
             className="px-2 py-1 text-xs bg-yellow-50 text-yellow-600 hover:bg-yellow-100 rounded transition font-medium"
-            onClick={() => callbacks.onCancel(row.id)}
+            onClick={() => callbacks.onCancel?.(row.id)}
           >
             Hủy
           </button>
