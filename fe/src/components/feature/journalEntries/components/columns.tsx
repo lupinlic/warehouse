@@ -17,6 +17,8 @@ export const journalEntryColumns = [
     key: 'description',
     label: 'Mô tả',
     sortable: true,
+    // allow wrapping and constrain width so table doesn't overflow
+    className: 'max-w-[40ch] break-words',
   },
   {
     key: 'status',
@@ -64,8 +66,10 @@ export const journalEntryColumns = [
     key: 'details',
     label: 'Chi tiết',
     sortable: false,
+    // ensure button cell can wrap/fit
+    className: 'whitespace-normal',
     render: (row: any) => (
-      <button 
+      <button
         className="px-2 py-1 text-xs cursor-pointer bg-purple-50 text-purple-600 hover:bg-purple-100 rounded transition font-medium"
       >
         Chi tiết

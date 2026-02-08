@@ -39,8 +39,13 @@ export const reportService = {
   }): Promise<ExportAnalysisReportResponse> {
     const query = new URLSearchParams()
     if (params?.warehouseId) query.append('warehouseId', params.warehouseId)
-    if (params?.fromDate) query.append('fromDate', params.fromDate)
-    if (params?.toDate) query.append('toDate', params.toDate)
+    // default fromDate to 2025-01-01 and toDate to today when not provided
+    const defaultFrom = '2025-01-01'
+    const defaultTo = new Date().toISOString().slice(0, 10)
+    const from = params?.fromDate || defaultFrom
+    const to = params?.toDate || defaultTo
+    if (from) query.append('fromDate', from)
+    if (to) query.append('toDate', to)
     if (params?.limit) query.append('limit', params.limit.toString())
 
     const url = query.toString()

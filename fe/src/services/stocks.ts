@@ -105,13 +105,19 @@ export async function updateStockRaw(id: string, payload: Record<string, any>) {
 }
 
 // Get all stocks
-export async function getStocks(params?: { page?: number; limit?: number; search?: string }) {
+export async function getStocks(params?: { page?: number; limit?: number; search?: string; warehouseId?: string; materialId?: string }) {
   const query = new URLSearchParams()
   if (params?.page) query.append('page', params.page.toString())
   if (params?.limit) query.append('limit', params.limit.toString())
   if (params?.search) query.append('search', params.search)
+  if (params?.warehouseId) query.append('warehouse_id', params.warehouseId)
+  if (params?.materialId) query.append('material_id', params.materialId)
 
-  const path = query.toString() ? `/inventories?${query.toString()}` : '/inventories'
+  // If both warehouseId and materialId are provided, use the search endpoint
+  const path = params?.warehouseId && params?.materialId
+    ? `/inventories/search?warehouse_id=${encodeURIComponent(params.warehouseId)}&material_id=${encodeURIComponent(params.materialId)}`
+    : (query.toString() ? `/inventories?${query.toString()}` : '/inventories')
+
   const res = await http<StockApiResponse[]>(path)
 
   return {

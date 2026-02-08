@@ -3,6 +3,9 @@ type Column<T> = {
   label: string
   sortable?: boolean
   render?: (row: T) => React.ReactNode
+  // optional class names for header and cell to allow per-column styling
+  headerClassName?: string
+  className?: string
 }
 
 type Props<T extends { id: string | number }> = {
@@ -28,13 +31,13 @@ export default function DataTable<T extends { id: string | number }>({
   return (
     <div className="space-y-4">
       <div className="overflow-x-auto rounded border border-gray-200 bg-white">
-        <table className="w-full text-sm text-gray-700 min-w-max">
+        <table className="w-full text-sm text-gray-700 min-w-0">
           <thead className="bg-gray-50 sticky top-0">
             <tr>
               {columns.map((col) => (
                 <th
                   key={String(col.key)}
-                  className="border-b border-gray-200 px-4 py-3 text-left font-semibold text-gray-600 whitespace-nowrap"
+                  className={`border-b border-gray-200 px-4 py-3 text-left font-semibold text-gray-600 whitespace-nowrap ${col.headerClassName || ''}`}
                 >
                   {col.label}
                 </th>
@@ -65,7 +68,7 @@ export default function DataTable<T extends { id: string | number }>({
                   }`}
                 >
                   {columns.map((col) => (
-                    <td key={String(col.key)} className="px-4 py-3 whitespace-nowrap">
+                    <td key={String(col.key)} className={`px-4 py-3 ${col.className || 'whitespace-nowrap'}`}>
                       {col.render ? col.render(row) : (row as any)[col.key]}
                     </td>
                   ))}

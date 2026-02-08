@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
+import { Trash2, Loader2 } from 'lucide-react'
 import type { ExportReceiptFormData, ExportReceiptItem } from '@/types/exportReceipt'
-import { Trash2 } from 'lucide-react'
 import type { Warehouse } from '@/types/warehouse'
 import type { Material } from '@/types/material'
 
@@ -41,13 +42,15 @@ export default function ExportForm({
     setFormData((prev) => ({
       ...prev,
       warehouseId: String(warehouseId),
+      // reset availability and loading for items
+      items: prev.items.map((it) => ({ ...it, availableQuantity: undefined, availableLoading: false } as any)),
     }))
   }
 
   const addItem = () => {
     setFormData((prev) => ({
       ...prev,
-      items: [...prev.items, { materialId: '', quantity: 1 }],
+      items: [...prev.items, { materialId: '', quantity: 1, availableQuantity: undefined, availableLoading: false } as any],
     }))
   }
 
@@ -65,23 +68,57 @@ export default function ExportForm({
         i === index ? { ...item, [field]: value } : item,
       ),
     }))
+
+    // If material changed and warehouse is selected, fetch available inventory
+    if (field === 'materialId') {
+      const materialId = value
+      const warehouseId = formData.warehouseId
+      if (warehouseId && materialId) {
+        // set loading state for this item
+        setFormData((prev) => ({
+          ...prev,
+          items: prev.items.map((it, i) => (i === index ? ({ ...it, availableLoading: true } as any) : it)),
+        }))
+
+        ;(async () => {
+          try {
+            const { getStocks } = await import('@/services/stocks')
+            const res = await getStocks({ warehouseId: String(warehouseId), materialId: String(materialId) })
+            const inv = res.data && res.data.length > 0 ? res.data[0] : null
+            const avail = inv ? inv.quantity : 0
+            setFormData((prev) => ({
+              ...prev,
+              items: prev.items.map((it, i) =>
+                i === index ? ({ ...it, availableQuantity: avail, availableLoading: false } as any) : it
+              ),
+            }))
+          } catch (err) {
+            console.error('Failed to fetch inventory for material:', err)
+            setFormData((prev) => ({
+              ...prev,
+              items: prev.items.map((it, i) => (i === index ? ({ ...it, availableQuantity: 0, availableLoading: false } as any) : it)),
+            }))
+          }
+        })()
+      }
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!formData.warehouseId) {
-      alert('Vui lòng chọn kho xuất')
+      toast.error('Vui lòng chọn kho xuất')
       return
     }
 
     if (formData.items.length === 0) {
-      alert('Vui lòng thêm ít nhất một vật tư')
+      toast.error('Vui lòng thêm ít nhất một vật tư')
       return
     }
 
     if (formData.items.some((item: any) => !item.materialId || item.quantity <= 0)) {
-      alert('Vui lòng điền đầy đủ thông tin các vật tư')
+      toast.error('Vui lòng điền đầy đủ thông tin các vật tư')
       return
     }
 
@@ -159,9 +196,9 @@ export default function ExportForm({
             </div>
 
             {formData.items.length > 0 ? (
-              <div className="space-y-3 border rounded-lg p-4">
+              <div className="space-y-3 border border-gray-300 rounded-lg p-4">
                 {formData.items.map((item, index) => (
-                  <div key={index} className="grid grid-cols-10 gap-2 items-end">
+                  <div key={index} className="grid grid-cols-11 gap-2 items-start">
                     {/* Material Selection - 7 cols */}
                     <div className="col-span-7">
                       <label className="block text-xs text-gray-600 mb-1">
@@ -191,13 +228,34 @@ export default function ExportForm({
                         min="0.01"
                         step="0.01"
                         value={item.quantity}
-                        onChange={(e: any) => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                        onChange={(e: any) => {
+                          const v = parseFloat(e.target.value) || 0
+                          const max = (item as any).availableQuantity
+                          const final = max !== undefined && !isNaN(max) && v > max ? max : v
+                          if (max !== undefined && v > max) {
+                            toast.error(`Số lượng vượt quá tồn kho (${max}). Đã tự động điều chỉnh.`)
+                          }
+                          updateItem(index, 'quantity', final)
+                        }}
+                        max={(item as any).availableQuantity ?? undefined}
                         className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
 
-                    {/* Delete Button - 1 col */}
+                    {/* Available quantity - 1 col */}
                     <div className="col-span-1">
+                      <label className="block text-xs text-gray-600 mb-1">Tồn</label>
+                      <div className="w-full px-3 pt-2  text-[12px] text-left">
+                        {(item as any).availableLoading ? (
+                          <Loader2 className="inline-block h-4 w-4 animate-spin text-gray-500" />
+                        ) : (
+                          ((item as any).availableQuantity ?? '-')
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Delete Button - 1 col */}
+                    <div className="col-span-1 pt-5">
                       <button
                         type="button"
                         onClick={() => removeItem(index)}

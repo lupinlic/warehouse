@@ -10,24 +10,5 @@ export const stockColumns = (
   { key: 'materialName', label: 'Tên vật tư' },
   { key: 'quantity', label: 'Số lượng' },
   { key: 'minQuantity', label: 'Số lượng tối thiểu' },
-  {
-    key: 'actions',
-    label: 'Thao tác',
-    render: (row: Stock) => (
-      <div className="flex gap-2">
-        <button
-          className="btn-warning btn"
-          onClick={() => onEdit(row)}
-        >
-          Sửa
-        </button>
-        <button
-          className="btn-danger btn"
-          onClick={() => onDelete(row)}
-        >
-          Xóa
-        </button>
-      </div>
-    ),
-  },
+  // actions column removed per request
 ]

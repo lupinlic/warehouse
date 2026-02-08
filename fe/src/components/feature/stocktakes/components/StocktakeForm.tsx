@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { getMaterials } from '@/services/materials'
 import { getWarehouses } from '@/services/warehouses'
-import { createStockAdjustment, mapStocktakeToApiPayload } from '@/services/stocktakes'
+import { getStocks } from '@/services/stocks'
+import { createStocktake } from '@/services/stocktakes'
 import type { Material } from '@/types/material'
 import type { Warehouse } from '@/types/warehouse'
 import { toast } from 'sonner'
@@ -43,12 +44,12 @@ export default function StocktakeForm({ onSubmit, onCancel }: Props) {
         setWarehouses(warehousesRes.data)
         setMaterials(materialsRes.data)
 
-        // Initialize items với tất cả materials
+        // Initialize items with materials (systemQty 0 until warehouse selected)
         const initialItems = materialsRes.data.map((m: any) => ({
           materialId: m.id,
           materialName: m.name,
-          systemQty: m.quantity || 0,
-          actualQty: m.quantity || 0,
+          systemQty: 0,
+          actualQty: 0,
         }))
         setItems(initialItems)
       } catch (error) {
@@ -61,6 +62,40 @@ export default function StocktakeForm({ onSubmit, onCancel }: Props) {
 
     loadData()
   }, [])
+
+  // When warehouse changes, load stocks for that warehouse and apply systemQty
+  useEffect(() => {
+    if (!warehouse) return
+
+    const loadStocksForWarehouse = async () => {
+      try {
+        setIsLoading(true)
+        const stocksRes = await getStocks({ warehouseId: warehouse })
+        const stocks = stocksRes.data || []
+
+        setItems((prev) =>
+          prev.map((item) => {
+            // stocks may have materialId as string
+            const found = stocks.find((s: any) => String(s.materialId) === String(item.materialId))
+            const systemQty = found ? found.quantity : 0
+            // If actualQty was 0 (initialized), preserve systemQty as starting actualQty
+            return {
+              ...item,
+              systemQty,
+              actualQty: item.actualQty && item.actualQty > 0 ? item.actualQty : systemQty,
+            }
+          })
+        )
+      } catch (err) {
+        console.error('Failed to load stocks for warehouse:', err)
+        toast.error('Lỗi khi tải tồn kho theo kho')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadStocksForWarehouse()
+  }, [warehouse])
 
   /* ======================
    * UPDATE ACTUAL QTY
@@ -113,19 +148,17 @@ export default function StocktakeForm({ onSubmit, onCancel }: Props) {
         return
       }
 
-      // Create adjustments
-      for (const item of adjustments) {
-        const diff = item.actualQty - item.systemQty
-        const payload = mapStocktakeToApiPayload({
-          warehouseId: warehouse,
-          materialId: item.materialId.toString(),
-          type: diff > 0 ? 'INCREASE' : 'DECREASE',
-          quantity: Math.abs(diff),
-          reason: note || 'Kiểm kê tồn kho',
-        })
-
-        await createStockAdjustment(payload)
+      // Build single payload in requested format and send once
+      const payload = {
+        warehouse_id: warehouse,
+        note: note || '',
+        items: adjustments.map((item) => ({
+          material_id: item.materialId.toString(),
+          actual_quantity: item.actualQty,
+        })),
       }
+
+      await createStocktake(payload)
 
       toast.success('Lập biên bản kiểm kê thành công')
       onSubmit()
