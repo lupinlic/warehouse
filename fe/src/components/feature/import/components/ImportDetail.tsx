@@ -7,8 +7,23 @@ type Props = {
 }
 
 export default function ImportDetail({ data }: Props) {
+  const handlePrint = () => {
+    window.print()
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 print:p-0">
+      
+      {/* Nút in */}
+      <div className="flex justify-end print:hidden">
+        <button
+          onClick={handlePrint}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          In phiếu
+        </button>
+      </div>
+
       {/* Thông tin phiếu nhập */}
       <div className="grid grid-cols-2 gap-4 pb-4 border-b border-gray-300">
         <div>
@@ -41,48 +56,47 @@ export default function ImportDetail({ data }: Props) {
 
       {/* Chi tiết vật tư */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Chi tiết vật tư nhập</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Chi tiết vật tư nhập
+        </h3>
+
         <div className="overflow-x-auto rounded-lg">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
+          <table className="w-full text-sm border border-gray-300">
+            <thead className="bg-gray-100 border-b border-gray-300">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold text-gray-700">Mã vật tư</th>
-                <th className="px-4 py-3 text-left font-semibold text-gray-700">Tên vật tư</th>
-                <th className="px-4 py-3 text-right font-semibold text-gray-700">Số lượng</th>
-                <th className="px-4 py-3 text-right font-semibold text-gray-700">Giá (VNĐ)</th>
-                <th className="px-4 py-3 text-right font-semibold text-gray-700">Thành tiền (VNĐ)</th>
+                <th className="px-4 py-3 text-left">Mã vật tư</th>
+                <th className="px-4 py-3 text-left">Tên vật tư</th>
+                <th className="px-4 py-3 text-right">Số lượng</th>
+                <th className="px-4 py-3 text-right">Giá (VNĐ)</th>
+                <th className="px-4 py-3 text-right">Thành tiền (VNĐ)</th>
               </tr>
             </thead>
+
             <tbody>
               {data.items.map((item, idx) => {
                 const itemTotal = item.quantity * item.price
                 return (
-                  <tr key={idx} className="border-b hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-900">
-                      {item.materialCode || 'N/A'}
-                    </td>
-                    <td className="px-4 py-3 text-gray-900">
-                      {item.materialName || 'N/A'}
-                    </td>
-                    <td className="px-4 py-3 text-right text-gray-900">
-                      {item.quantity}
-                    </td>
-                    <td className="px-4 py-3 text-right text-gray-900">
+                  <tr key={idx} className="border-b">
+                    <td className="px-4 py-3">{item.materialCode || 'N/A'}</td>
+                    <td className="px-4 py-3">{item.materialName || 'N/A'}</td>
+                    <td className="px-4 py-3 text-right">{item.quantity}</td>
+                    <td className="px-4 py-3 text-right">
                       {item.price.toLocaleString()}
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold text-green-600">
+                    <td className="px-4 py-3 text-right font-semibold">
                       {itemTotal.toLocaleString()}
                     </td>
                   </tr>
                 )
               })}
             </tbody>
-            <tfoot className="bg-gray-50 font-semibold">
+
+            <tfoot className="font-semibold">
               <tr>
-                <td colSpan={4} className="px-4 py-3 text-right text-gray-900">
+                <td colSpan={4} className="px-4 py-3 text-right">
                   Tổng cộng:
                 </td>
-                <td className="px-4 py-3 text-right text-lg text-green-600">
+                <td className="px-4 py-3 text-right">
                   {data.totalAmount?.toLocaleString()} VNĐ
                 </td>
               </tr>
@@ -94,8 +108,18 @@ export default function ImportDetail({ data }: Props) {
       {/* Timestamps */}
       {(data.createdAt || data.updatedAt) && (
         <div className="text-xs text-gray-500 border-t pt-4">
-          {data.createdAt && <p>Tạo lúc: {new Date(data.createdAt).toLocaleString('vi-VN')}</p>}
-          {data.updatedAt && <p>Cập nhật lúc: {new Date(data.updatedAt).toLocaleString('vi-VN')}</p>}
+          {data.createdAt && (
+            <p>
+              Tạo lúc:{' '}
+              {new Date(data.createdAt).toLocaleString('vi-VN')}
+            </p>
+          )}
+          {data.updatedAt && (
+            <p>
+              Cập nhật lúc:{' '}
+              {new Date(data.updatedAt).toLocaleString('vi-VN')}
+            </p>
+          )}
         </div>
       )}
     </div>
