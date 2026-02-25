@@ -11,6 +11,10 @@ interface StockApiResponse {
   material_code?: string
   material_name?: string
   unit?: string
+  // average / unit price may be provided by the API (name may vary)
+  avg_price?: number
+  price?: number
+  unit_price?: number
   quantity: number
   min_quantity: number
   created_at?: string
@@ -64,6 +68,8 @@ async function mapApiStockToStock(apiStock: StockApiResponse): Promise<Stock> {
     materialCode: apiStock.material_code || material?.code || '',
     materialName: apiStock.material_name || material?.name || '',
     unit: apiStock.unit || '',
+    // prefer avg_price, then price, then unit_price
+    price: (apiStock as any).avg_price ?? (apiStock as any).price ?? (apiStock as any).unit_price ?? undefined,
     quantity: apiStock.quantity,
     minQuantity: apiStock.min_quantity,
     createdAt: apiStock.created_at,

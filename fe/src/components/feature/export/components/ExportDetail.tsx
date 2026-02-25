@@ -72,6 +72,9 @@ export default function ExportDetail({
                 Tên vật tư
               </th>
               <th className="border px-3 py-2 text-right">
+                Giá xuất
+              </th>
+              <th className="border px-3 py-2 text-right">
                 Số lượng
               </th>
             </tr>
@@ -84,6 +87,9 @@ export default function ExportDetail({
                 </td>
                 <td className="border px-3 py-2">
                   {item.materialName || '-'}
+                </td>
+                <td className="border px-3 py-2 text-right">
+                  {item.price ?? '-'}
                 </td>
                 <td className="border px-3 py-2 text-right">
                   {item.quantity}

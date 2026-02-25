@@ -47,7 +47,7 @@ function mapApiItemToItem(apiItem: ExportReceiptItemApiResponse): ExportReceiptI
     materialCode: apiItem.material?.code,
     materialName: apiItem.material?.name,
     quantity: apiItem.quantity,
-    price: 2,
+    price: (apiItem as any).price ?? undefined,
   }
 }
 
@@ -138,7 +138,7 @@ export function mapFormDataToApiPayload(data: ExportReceiptFormData): Record<str
     items: data.items.map((item) => ({
       material_id: item.materialId,
       quantity: item.quantity,
-      price: item.price || 2,
+      price: item.price,
     })),
   }
   console.log('Export payload to send:', payload)

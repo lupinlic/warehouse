@@ -42,15 +42,15 @@ export default function ExportForm({
     setFormData((prev) => ({
       ...prev,
       warehouseId: String(warehouseId),
-      // reset availability and loading for items
-      items: prev.items.map((it) => ({ ...it, availableQuantity: undefined, availableLoading: false } as any)),
+      // reset availability, loading and avg price for items
+      items: prev.items.map((it) => ({ ...it, availableQuantity: undefined, availableLoading: false, availableAvgPrice: undefined } as any)),
     }))
   }
 
   const addItem = () => {
     setFormData((prev) => ({
       ...prev,
-      items: [...prev.items, { materialId: '', quantity: 1, availableQuantity: undefined, availableLoading: false } as any],
+      items: [...prev.items, { materialId: '', quantity: 1, price: 0, availableQuantity: undefined, availableLoading: false, availableAvgPrice: undefined } as any],
     }))
   }
 
@@ -77,7 +77,7 @@ export default function ExportForm({
         // set loading state for this item
         setFormData((prev) => ({
           ...prev,
-          items: prev.items.map((it, i) => (i === index ? ({ ...it, availableLoading: true } as any) : it)),
+          items: prev.items.map((it, i) => (i === index ? ({ ...it, availableLoading: true, availableAvgPrice: undefined } as any) : it)),
         }))
 
         ;(async () => {
@@ -86,17 +86,18 @@ export default function ExportForm({
             const res = await getStocks({ warehouseId: String(warehouseId), materialId: String(materialId) })
             const inv = res.data && res.data.length > 0 ? res.data[0] : null
             const avail = inv ? inv.quantity : 0
+            const avgPriceFromInv = inv ? (inv as any).avg_price ?? (inv as any).price ?? undefined : undefined
             setFormData((prev) => ({
               ...prev,
               items: prev.items.map((it, i) =>
-                i === index ? ({ ...it, availableQuantity: avail, availableLoading: false } as any) : it
+                i === index ? ({ ...it, availableQuantity: avail, availableAvgPrice: avgPriceFromInv, price: (it.price || avgPriceFromInv) ?? it.price, availableLoading: false } as any) : it
               ),
             }))
           } catch (err) {
             console.error('Failed to fetch inventory for material:', err)
             setFormData((prev) => ({
               ...prev,
-              items: prev.items.map((it, i) => (i === index ? ({ ...it, availableQuantity: 0, availableLoading: false } as any) : it)),
+              items: prev.items.map((it, i) => (i === index ? ({ ...it, availableQuantity: 0, availableAvgPrice: undefined, availableLoading: false } as any) : it)),
             }))
           }
         })()
@@ -197,10 +198,10 @@ export default function ExportForm({
 
             {formData.items.length > 0 ? (
               <div className="space-y-3 border border-gray-300 rounded-lg p-4">
-                {formData.items.map((item, index) => (
-                  <div key={index} className="grid grid-cols-11 gap-2 items-start">
-                    {/* Material Selection - 7 cols */}
-                    <div className="col-span-7">
+                        {formData.items.map((item, index) => (
+                          <div key={index} className="grid grid-cols-12 gap-2 items-start">
+                            {/* Material Selection - 5 cols */}
+                            <div className="col-span-5">
                       <label className="block text-xs text-gray-600 mb-1">
                         Vật tư
                       </label>
@@ -240,6 +241,28 @@ export default function ExportForm({
                         max={(item as any).availableQuantity ?? undefined}
                         className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
+                    </div>
+
+                    {/* Price - 2 cols */}
+                    <div className="col-span-2">
+                      <label className="block text-xs text-gray-600 mb-1">Giá</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={(item as any).price ?? ''}
+                        onChange={(e: any) => {
+                          const v = parseFloat(e.target.value) || 0
+                          updateItem(index, 'price' as any, v)
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    {/* Import price (from stock) - 1 col */}
+                    <div className="col-span-1">
+                      <label className="block text-xs text-gray-600 mb-1">Giá nhập</label>
+                      <div className="w-full px-3 pt-2 text-[12px] text-left">{(item as any).availableAvgPrice ?? '-'}</div>
                     </div>
 
                     {/* Available quantity - 1 col */}

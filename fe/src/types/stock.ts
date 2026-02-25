@@ -10,6 +10,8 @@ export interface Stock {
   materialCode: string
   materialName: string
   unit: string
+  // optional last/import price available from inventory API
+  price?: number
   quantity: number
   minQuantity: number
   createdAt?: string
